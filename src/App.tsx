@@ -1,18 +1,20 @@
 import React from "react";
-import Footer from "./components/Footer"; // adjust the path as necessary
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import FlightSearch from "./components/Flightsearch"; // adjust the path as necessary
+import Footer from "./components/Footer";
+import FlightSearch from "./components/Flightsearch";
+import FlightSearchResults from "./components/FlightSearchResults";
 
 const App = () => {
   return (
-    <div>
-      {/* Other content */}
+    <Router>
       <Navbar />
-      <FlightSearch />
-      {/* Other content */}
+      <Routes>
+        <Route path="/" element={<FlightSearch />} />
+        <Route path="/results" element={<FlightSearchResults />} />
+      </Routes>
       <Footer />
-    </div>
-    
+    </Router>
   );
 };
 
