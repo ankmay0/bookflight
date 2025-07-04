@@ -27,6 +27,7 @@ const FlightSearchResults: React.FC = () => {
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [flights, setFlights] = useState<any[]>([]);
   const [showFilters, setShowFilters] = useState<boolean>(true);
+  const [sortBy, setSortBy] = useState<string>("best");
 
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -66,6 +67,12 @@ const FlightSearchResults: React.FC = () => {
     return true;
   });
 
+  const sortedFlights = [...filteredFlights].sort((a, b) => {
+    if (sortBy === "priceLow") return a.price - b.price;
+    if (sortBy === "priceHigh") return b.price - a.price;
+    return 0;
+  });
+
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#f9f9f9" }}>
       {/* Top Bar */}
@@ -82,7 +89,11 @@ const FlightSearchResults: React.FC = () => {
         <Stack direction="row" spacing={2} flexWrap="wrap">
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Sort by</InputLabel>
-            <Select defaultValue="best" label="Sort by">
+            <Select
+              value={sortBy}
+              label="Sort by"
+              onChange={(e) => setSortBy(e.target.value)}
+            >
               <MenuItem value="best">Best Value</MenuItem>
               <MenuItem value="priceLow">Price: Low to High</MenuItem>
               <MenuItem value="priceHigh">Price: High to Low</MenuItem>
@@ -117,7 +128,7 @@ const FlightSearchResults: React.FC = () => {
 
         <Grid item xs={12} md={showFilters ? 9 : 12}>
           <Stack spacing={3}>
-            {filteredFlights.map((flight, index) => (
+            {sortedFlights.map((flight, index) => (
               <Paper
                 key={index}
                 elevation={3}
