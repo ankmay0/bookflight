@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import { useNavigate } from "react-router-dom";
 
 const navItems = [
   "Search Flight",
@@ -27,25 +28,31 @@ const navItems = [
 ];
 
 const Navbar: React.FC = () => {
-  const [selected, setSelected] = React.useState<string>("Search Flight");
+  const [selected, setSelected] = React.useState("Search Flight");
   const [mobileOpen, setMobileOpen] = React.useState(false);
-
   const isMobile = useMediaQuery("(max-width:1000px)");
+  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleNavClick = (item: string) => {
+    setSelected(item);
+    // Routing logic
+    if (item === "Search Flight") navigate("/");
+    // Add other routes here when available
+    else if (item === "Hotel Search") navigate("/hotels");
+    else if (item === "Car Rental") navigate("/cars");
+    else if (item === "Packages") navigate("/packages");
+    else if (item === "Support") navigate("/support");
   };
 
   const drawer = (
     <Box sx={{ width: 250 }} role="presentation" onClick={handleDrawerToggle}>
       <Typography
         variant="h6"
-        sx={{
-          my: 2,
-          textAlign: "center",
-          fontWeight: "bold",
-          color: "#1976d2",
-        }}
+        sx={{ my: 2, textAlign: "center", fontWeight: "bold", color: "#1976d2" }}
       >
         BookFlight
       </Typography>
@@ -53,7 +60,7 @@ const Navbar: React.FC = () => {
       <List>
         {navItems.map((item) => (
           <ListItem key={item} disablePadding>
-            <ListItemButton onClick={() => setSelected(item)}>
+            <ListItemButton onClick={() => handleNavClick(item)}>
               <ListItemText
                 primary={item}
                 primaryTypographyProps={{
@@ -63,7 +70,6 @@ const Navbar: React.FC = () => {
                   },
                 }}
               />
-
             </ListItemButton>
           </ListItem>
         ))}
@@ -90,9 +96,7 @@ const Navbar: React.FC = () => {
             fontSize: "16px",
             fontWeight: 500,
             borderRadius: "8px",
-            "&:hover": {
-              backgroundColor: "#115293",
-            },
+            "&:hover": { backgroundColor: "#115293" },
           }}
         >
           Sign Up
@@ -111,12 +115,13 @@ const Navbar: React.FC = () => {
           px: 3,
         }}
       >
-        <Toolbar disableGutters sx={{ display: "flex", justifyContent: "space-between" }}>
-          {/* Left: Logo and Title */}
+        <Toolbar disableGutters sx={{ justifyContent: "space-between" }}>
+          {/* Logo */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton edge="start" color="inherit" sx={{ mr: 1 }}>
+            <IconButton edge="start" color="inherit" sx={{ mr: 1 }} onClick={() => navigate("/")}>
               <FlightTakeoffIcon sx={{ color: "#1976d2", fontSize: 30 }} />
             </IconButton>
+
             <Typography
               variant="h5"
               sx={{
@@ -129,18 +134,14 @@ const Navbar: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Center / Mobile toggle */}
-          {isMobile ? (
-            <IconButton onClick={handleDrawerToggle} color="inherit">
-              <MenuIcon sx={{ color: "#1976d2", fontSize: 28 }} />
-            </IconButton>
-          ) : (
+          {/* Center nav for desktop */}
+          {!isMobile && (
             <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}>
               <Stack direction="row" spacing={4}>
                 {navItems.map((item) => (
                   <Button
                     key={item}
-                    onClick={() => setSelected(item)}
+                    onClick={() => handleNavClick(item)}
                     disableRipple
                     sx={{
                       color: selected === item ? "black" : "gray",
@@ -161,9 +162,7 @@ const Navbar: React.FC = () => {
                       },
                       "&:hover": {
                         color: "black",
-                        "&::after": {
-                          width: "100%",
-                        },
+                        "&::after": { width: "100%" },
                       },
                     }}
                   >
@@ -174,7 +173,7 @@ const Navbar: React.FC = () => {
             </Box>
           )}
 
-          {/* Right: Sign In & Sign Up Buttons (hidden in mobile) */}
+          {/* Sign In / Sign Up desktop buttons */}
           {!isMobile && (
             <Stack direction="row" spacing={2}>
               <Button
@@ -184,9 +183,7 @@ const Navbar: React.FC = () => {
                   textTransform: "none",
                   fontSize: "16px",
                   fontWeight: 500,
-                  "&:hover": {
-                    backgroundColor: "rgba(25, 118, 210, 0.04)",
-                  },
+                  "&:hover": { backgroundColor: "rgba(25, 118, 210, 0.04)" },
                 }}
               >
                 Sign In
@@ -201,14 +198,19 @@ const Navbar: React.FC = () => {
                   fontWeight: 500,
                   borderRadius: "8px",
                   px: 2.5,
-                  "&:hover": {
-                    backgroundColor: "#115293",
-                  },
+                  "&:hover": { backgroundColor: "#115293" },
                 }}
               >
                 Sign Up
               </Button>
             </Stack>
+          )}
+
+          {/* Mobile toggle button */}
+          {isMobile && (
+            <IconButton onClick={handleDrawerToggle} color="inherit">
+              <MenuIcon sx={{ color: "#1976d2", fontSize: 28 }} />
+            </IconButton>
           )}
         </Toolbar>
       </AppBar>

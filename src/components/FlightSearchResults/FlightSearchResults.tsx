@@ -11,13 +11,13 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  useMediaQuery,
 } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import FilterListIcon from "@mui/icons-material/FilterList";
-
 import SidebarFilters from "./SidebarFilters";
 
 const FlightSearchResults: React.FC = () => {
@@ -26,6 +26,9 @@ const FlightSearchResults: React.FC = () => {
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [flights, setFlights] = useState<any[]>([]);
+  const [showFilters, setShowFilters] = useState<boolean>(true);
+
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/ankmay0/bookflight/main/Data.json")
@@ -48,7 +51,7 @@ const FlightSearchResults: React.FC = () => {
   const filteredFlights = flights.filter((flight) => {
     if (flight.price < priceRange[0] || flight.price > priceRange[1]) return false;
     if (selectedAirlines.length > 0 && !selectedAirlines.includes(flight.airline)) return false;
-    if (selectedStops.length > 0 && !selectedStops.some((stop) => flight.stops.includes(stop))) return false;
+    if (selectedStops.length > 0 && !selectedStops.some((stop: string) => flight.stops.includes(stop))) return false;
 
     if (selectedTimes.length > 0) {
       const hour = parseHour(flight.departure);
@@ -60,61 +63,78 @@ const FlightSearchResults: React.FC = () => {
       });
       if (!matchTime) return false;
     }
-
     return true;
   });
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f9f9f9" }}>
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={3}>
-          <SidebarFilters
-            priceRange={priceRange}
-            setPriceRange={setPriceRange}
-            selectedTimes={selectedTimes}
-            setSelectedTimes={setSelectedTimes}
-            selectedStops={selectedStops}
-            setSelectedStops={setSelectedStops}
-            selectedAirlines={selectedAirlines}
-            setSelectedAirlines={setSelectedAirlines}
-          />
-        </Grid>
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#f9f9f9" }}>
+      {/* Top Bar */}
+      <Box
+        display="flex"
+        flexDirection={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        mb={3}
+        gap={2}
+      >
+        <Typography variant="h6">{filteredFlights.length} flights found</Typography>
 
-        <Grid item xs={12} md={9}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">{filteredFlights.length} flights found</Typography>
-            <Stack direction="row" spacing={2}>
-              <FormControl size="small">
-                <InputLabel>Sort by</InputLabel>
-                <Select defaultValue="best" label="Sort by">
-                  <MenuItem value="best">Best Value</MenuItem>
-                  <MenuItem value="priceLow">Price: Low to High</MenuItem>
-                  <MenuItem value="priceHigh">Price: High to Low</MenuItem>
-                </Select>
-              </FormControl>
-              <Button variant="outlined" startIcon={<FilterListIcon />}>
-                Filters
-              </Button>
-            </Stack>
-          </Box>
+        <Stack direction="row" spacing={2} flexWrap="wrap">
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Sort by</InputLabel>
+            <Select defaultValue="best" label="Sort by">
+              <MenuItem value="best">Best Value</MenuItem>
+              <MenuItem value="priceLow">Price: Low to High</MenuItem>
+              <MenuItem value="priceHigh">Price: High to Low</MenuItem>
+            </Select>
+          </FormControl>
 
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setShowFilters((prev) => !prev)}
+          >
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+        </Stack>
+      </Box>
+
+      <Grid container spacing={3}>
+        {showFilters && (
+          <Grid item xs={12} md={3}>
+            <SidebarFilters
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+              selectedTimes={selectedTimes}
+              setSelectedTimes={setSelectedTimes}
+              selectedStops={selectedStops}
+              setSelectedStops={setSelectedStops}
+              selectedAirlines={selectedAirlines}
+              setSelectedAirlines={setSelectedAirlines}
+            />
+          </Grid>
+        )}
+
+        <Grid item xs={12} md={showFilters ? 9 : 12}>
           <Stack spacing={3}>
             {filteredFlights.map((flight, index) => (
               <Paper
                 key={index}
                 elevation={3}
                 sx={{
-                  p: 3,
+                  p: 2,
                   borderRadius: 3,
                   border: "1px solid #ddd",
                   display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: 2,
                   flexWrap: "wrap",
                 }}
               >
-                <Box flex={1} sx={{ minWidth: 160 }}>
+                {/* Airline Info */}
+                <Box flex={1} sx={{ minWidth: 140 }}>
                   <Typography variant="subtitle1" fontWeight="bold" mb={0.5}>
                     {flight.airline}
                   </Typography>
@@ -123,40 +143,37 @@ const FlightSearchResults: React.FC = () => {
                   </Typography>
                 </Box>
 
-                <Box textAlign="center" sx={{ minWidth: 120 }}>
+                {/* Departure */}
+                <Box textAlign="center" sx={{ minWidth: 110 }}>
                   <FlightTakeoffIcon sx={{ mb: 0.5 }} color="primary" />
-                  <Typography variant="h6" mb={0.5}>
-                    {flight.departure}
-                  </Typography>
+                  <Typography variant="h6">{flight.departure}</Typography>
                   <Typography variant="caption">{flight.from}</Typography>
                 </Box>
 
-                <Box textAlign="center" sx={{ minWidth: 120 }}>
+                {/* Duration + stops */}
+                <Box textAlign="center" sx={{ minWidth: 110 }}>
                   <ScheduleIcon sx={{ mb: 0.5 }} color="action" />
-                  <Typography variant="body1" mb={0.5}>
-                    {flight.duration}
-                  </Typography>
+                  <Typography variant="body1">{flight.duration}</Typography>
                   <Chip label={flight.stops} size="small" sx={{ mt: 0.5, bgcolor: "#e0e0e0" }} />
                 </Box>
 
-                <Box textAlign="center" sx={{ minWidth: 120 }}>
+                {/* Arrival */}
+                <Box textAlign="center" sx={{ minWidth: 110 }}>
                   <FlightLandIcon sx={{ mb: 0.5 }} color="secondary" />
-                  <Typography variant="h6" mb={0.5}>
-                    {flight.arrival}
-                  </Typography>
+                  <Typography variant="h6">{flight.arrival}</Typography>
                   <Typography variant="caption">{flight.to}</Typography>
                 </Box>
 
+                {/* Price */}
                 <Box textAlign="center" sx={{ minWidth: 100 }}>
                   <AttachMoneyIcon color="success" />
-                  <Typography variant="h6" mb={0.5}>
-                    ${flight.price}
-                  </Typography>
+                  <Typography variant="h6">${flight.price}</Typography>
                   <Typography variant="caption">per person</Typography>
                 </Box>
 
-                <Box sx={{ minWidth: 140 }}>
-                  <Button variant="contained" color="primary" sx={{ textTransform: "none" }} fullWidth>
+                {/* Book Button */}
+                <Box sx={{ minWidth: 130 }}>
+                  <Button variant="contained" color="primary" fullWidth sx={{ textTransform: "none" }}>
                     Select
                   </Button>
                 </Box>
