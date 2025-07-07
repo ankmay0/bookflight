@@ -24,7 +24,6 @@ import axios from "axios";
 import Autocomplete from "@mui/material/Autocomplete";
 import debounce from "lodash.debounce";
 
-
 const FlightSearch: React.FC = () => {
   const [tripType, setTripType] = useState("round");
   const [from, setFrom] = useState("");
@@ -34,14 +33,32 @@ const FlightSearch: React.FC = () => {
   const [passengers, setPassengers] = useState(1);
   const [fromOptions, setFromOptions] = useState<any[]>([]);
   const [fromInputValue, setFromInputValue] = useState("");
-  const [openFromDropdown, setOpenFromDropdown] = useState(false);
-  const formattedOptions: any[] = [];
+  const [toOptions, setToOptions] = useState<any[]>([]);
+  const [toInputValue, setToInputValue] = useState("");
+
 
   const navigate = useNavigate();
 
-  const fetchLocations = async (keyword: string) => {
+  function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
+
+
+  const fetchLocations = async (keyword: string, setOptions: React.Dispatch<React.SetStateAction<any[]>>) => {
     if (!keyword) {
-      setFromOptions([]);
+      setOptions([]);
       return;
     }
     try {
@@ -52,44 +69,56 @@ const FlightSearch: React.FC = () => {
 
       data.forEach((item: any) => {
         if (item.subType === "CITY") {
-          // Add the city as a parent option
+          const cityName = item.name || `${item.iata} Metropolitan Area`;
           formattedOptions.push({
-            label: `${item.name} (${item.iata})`,
+            label: `${cityName} (${item.iata})`,
             value: item.iata,
             isParent: true,
+            displayText: `${cityName} (${item.iata})`,
           });
 
-          // Add each airport under this city
-          item.groupData.forEach((airport: any) => {
-            formattedOptions.push({
-              label: `${airport.name} (${airport.iata})`,
-              value: airport.iata,
-              distance: "", // or compute distance if needed
-              isChild: true,
+          if (item.groupData && Array.isArray(item.groupData)) {
+            item.groupData.forEach((airport: any) => {
+              const cityInfo = airport.city ? `, ${airport.city}` : '';
+              const distance = haversineDistance(
+                item.latitude, item.longitude,
+                airport.latitude, airport.longitude
+              ).toFixed(1);
+
+              formattedOptions.push({
+                label: `${airport.name} (${airport.iata})${cityInfo} — ${distance} km`,
+                value: airport.iata,
+                isChild: true,
+                displayText: `${airport.name} (${airport.iata})`,
+                distance: `${distance} km`
+              });
             });
-          });
+          }
+
         } else if (item.subType === "AIRPORT") {
-          // If direct airport (not inside groupData)
+          const cityInfo = item.city ? `, ${item.city}` : '';
           formattedOptions.push({
-            label: `${item.name} (${item.iata})`,
+            label: `${item.name} (${item.iata})${cityInfo}`,
             value: item.iata,
-            distance: "",
             isChild: false,
+            displayText: `${item.name} (${item.iata})`,
           });
         }
       });
 
-      setFromOptions(formattedOptions);
+      setOptions(formattedOptions);
     } catch (error) {
       console.error("Failed to fetch locations", error);
     }
   };
 
+  const debouncedFromFetch = useMemo(
+    () => debounce((keyword: string) => fetchLocations(keyword, setFromOptions), 400),
+    []
+  );
 
-
-
-  const debouncedFetch = React.useMemo(
-    () => debounce(fetchLocations, 400),
+  const debouncedToFetch = useMemo(
+    () => debounce((keyword: string) => fetchLocations(keyword, setToOptions), 400),
     []
   );
 
@@ -184,61 +213,61 @@ const FlightSearch: React.FC = () => {
 
         {/* Form Fields */}
         <Grid container spacing={2}>
-          <Grid xs={12} sm={6} md={2.4}>
+          <Grid item xs={12} sm={6} md={2.4}>
             <Autocomplete
               freeSolo
               options={fromOptions}
-              getOptionLabel={(option) => option.label || ""}
+              getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
               inputValue={fromInputValue}
               onInputChange={(event, newInputValue) => {
                 setFromInputValue(newInputValue);
-                debouncedFetch(newInputValue);
+                debouncedFromFetch(newInputValue);
               }}
               onChange={(event, value) => {
-                setFrom(value?.value || "");
-                setOpenFromDropdown(false);
+                if (value && typeof value !== 'string') {
+                  setFrom(value.value);
+                  setFromInputValue(value.displayText || value.label);
+                }
               }}
               open={fromOptions.length > 0}
               onClose={() => setFromOptions([])}
+              filterOptions={(options) => options} // Disable default filtering since we're handling it server-side
               renderOption={(props, option) => (
                 <li
                   {...props}
                   style={{
-                    padding: "10px 12px",
-                    paddingLeft: option.isChild ? "32px" : "12px",  // indent child options
+                    padding: "10px 16px",
+                    paddingLeft: option.isChild ? "40px" : "16px",
                     fontWeight: option.isParent ? 600 : 400,
-                    backgroundColor: option.isParent ? "#f6f6f6" : "inherit",
+                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                    borderBottom: "1px solid #eee",
+                    cursor: option.isParent ? "default" : "pointer",
+                    pointerEvents: option.isParent ? "none" : "auto",
+                    display: "flex",
+                    alignItems: "center",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    {!option.isParent && (
-                      <img
-                        src="https://imgak.mmtcdn.com/flights/assets/media/dt/common/icons/ic-flight-onward.png"
-                        alt="icon"
-                        style={{ width: 20, height: 20, marginRight: 10 }}
-                      />
-                    )}
-                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                      <Typography variant="subtitle2">
-                        {option.label}
-                      </Typography>
-                      {option.distance && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.distance}
-                        </Typography>
-                      )}
-                    </Box>
-                    {option.value && (
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: 600, color: "grey.600", marginLeft: 1 }}
-                      >
-                        {option.value}
+                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: option.isParent ? 600 : 400,
+                        color: "text.primary"
+                      }}
+                    >
+                      {option.label}
+                    </Typography>
+                    {option.isChild && option.distance && (
+                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                        {option.distance} from city center
                       </Typography>
                     )}
                   </Box>
                 </li>
               )}
+
+
+
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -255,25 +284,75 @@ const FlightSearch: React.FC = () => {
                 />
               )}
             />
-
           </Grid>
 
           <Grid item xs={12} sm={6} md={2.4}>
-            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-              To
-            </Typography>
-            <TextField
-              placeholder="Los Angeles (LA)"
-              fullWidth
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FlightLand />
-                  </InputAdornment>
-                ),
+            <Autocomplete
+              freeSolo
+              options={toOptions}
+              getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+              inputValue={toInputValue}
+              onInputChange={(event, newInputValue) => {
+                setToInputValue(newInputValue);
+                debouncedToFetch(newInputValue);
               }}
+              onChange={(event, value) => {
+                if (value && typeof value !== 'string') {
+                  setTo(value.value);
+                  setToInputValue(value.displayText || value.label);
+                }
+              }}
+              open={toOptions.length > 0}
+              onClose={() => setToOptions([])}
+              filterOptions={(options) => options}
+              renderOption={(props, option) => (
+                <li
+                  {...props}
+                  style={{
+                    padding: "10px 16px",
+                    paddingLeft: option.isChild ? "40px" : "16px",
+                    fontWeight: option.isParent ? 600 : 400,
+                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                    borderBottom: "1px solid #eee",
+                    cursor: option.isParent ? "default" : "pointer",
+                    pointerEvents: option.isParent ? "none" : "auto",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: option.isParent ? 600 : 400,
+                        color: "text.primary"
+                      }}
+                    >
+                      {option.label}
+                    </Typography>
+                    {option.isChild && option.distance && (
+                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                        {option.distance} from city center
+                      </Typography>
+                    )}
+                  </Box>
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="To"
+                  placeholder="Los Angeles (LAX)"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FlightLand />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
             />
           </Grid>
 
@@ -282,10 +361,12 @@ const FlightSearch: React.FC = () => {
               Departure
             </Typography>
             <TextField
+              label=""
               type="date"
               fullWidth
               value={departDate}
               onChange={(e) => setDepartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -340,12 +421,12 @@ const FlightSearch: React.FC = () => {
             </Select>
           </Grid>
 
-          <Grid xs={12} sx={{ mt: { xs: 2, md: 3 } }}>
+          <Grid item xs={12} sx={{ mt: { xs: 2, md: 3 } }}>
             <Button
               variant="contained"
               fullWidth
               startIcon={<Search />}
-              onClick={() => navigate("/results")}  // 🔥 navigate to results page
+              onClick={() => navigate("/results")}
               sx={{
                 bgcolor: "#2c39e8",
                 color: "#fff",
