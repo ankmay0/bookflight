@@ -213,220 +213,240 @@ const FlightSearch: React.FC = () => {
 
         {/* Form Fields */}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Autocomplete
-              freeSolo
-              options={fromOptions}
-              getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-              inputValue={fromInputValue}
-              onInputChange={(event, newInputValue) => {
-                setFromInputValue(newInputValue);
-                debouncedFromFetch(newInputValue);
-              }}
-              onChange={(event, value) => {
-                if (value && typeof value !== 'string') {
-                  setFrom(value.value);
-                  setFromInputValue(value.displayText || value.label);
-                }
-              }}
-              open={fromOptions.length > 0}
-              onClose={() => setFromOptions([])}
-              filterOptions={(options) => options} // Disable default filtering since we're handling it server-side
-              renderOption={(props, option) => (
-                <li
-                  {...props}
-                  style={{
-                    padding: "10px 16px",
-                    paddingLeft: option.isChild ? "40px" : "16px",
-                    fontWeight: option.isParent ? 600 : 400,
-                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                    borderBottom: "1px solid #eee",
-                    cursor: option.isParent ? "default" : "pointer",
-                    pointerEvents: option.isParent ? "none" : "auto",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary"
-                      }}
-                    >
-                      {option.label}
-                    </Typography>
-                    {option.isChild && option.distance && (
-                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                        {option.distance} from city center
+          <Grid container spacing={2}>
+            {/* From */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+                From
+              </Typography>
+              <Autocomplete
+                freeSolo
+                options={fromOptions}
+                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                inputValue={fromInputValue}
+                onInputChange={(event, newInputValue) => {
+                  setFromInputValue(newInputValue);
+                  debouncedFromFetch(newInputValue);
+                }}
+                onChange={(event, value) => {
+                  if (value && typeof value !== 'string') {
+                    setFrom(value.value);
+                    setFromInputValue(value.displayText || value.label);
+                  }
+                }}
+                open={fromOptions.length > 0}
+                onClose={() => setFromOptions([])}
+                filterOptions={(options) => options}
+                renderOption={(props, option) => (
+                  <li
+                    {...props}
+                    style={{
+                      padding: "10px 16px",
+                      paddingLeft: option.isChild ? "40px" : "16px",
+                      fontWeight: option.isParent ? 600 : 400,
+                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                      borderBottom: "1px solid #eee",
+                      cursor: option.isParent ? "default" : "pointer",
+                      pointerEvents: option.isParent ? "none" : "auto",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: option.isParent ? 600 : 400,
+                          color: "text.primary"
+                        }}
+                      >
+                        {option.label}
                       </Typography>
-                    )}
-                  </Box>
-                </li>
-              )}
+                      {option.isChild && option.distance && (
+                        <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                          {option.distance} from city center
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="New York (NYC)"
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <FlightTakeoff />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
 
-
-
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="From"
-                  placeholder="New York (NYC)"
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FlightTakeoff />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Autocomplete
-              freeSolo
-              options={toOptions}
-              getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
-              inputValue={toInputValue}
-              onInputChange={(event, newInputValue) => {
-                setToInputValue(newInputValue);
-                debouncedToFetch(newInputValue);
-              }}
-              onChange={(event, value) => {
-                if (value && typeof value !== 'string') {
-                  setTo(value.value);
-                  setToInputValue(value.displayText || value.label);
-                }
-              }}
-              open={toOptions.length > 0}
-              onClose={() => setToOptions([])}
-              filterOptions={(options) => options}
-              renderOption={(props, option) => (
-                <li
-                  {...props}
-                  style={{
-                    padding: "10px 16px",
-                    paddingLeft: option.isChild ? "40px" : "16px",
-                    fontWeight: option.isParent ? 600 : 400,
-                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                    borderBottom: "1px solid #eee",
-                    cursor: option.isParent ? "default" : "pointer",
-                    pointerEvents: option.isParent ? "none" : "auto",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary"
-                      }}
-                    >
-                      {option.label}
-                    </Typography>
-                    {option.isChild && option.distance && (
-                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                        {option.distance} from city center
+            {/* To */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+                To
+              </Typography>
+              <Autocomplete
+                freeSolo
+                options={toOptions}
+                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                inputValue={toInputValue}
+                onInputChange={(event, newInputValue) => {
+                  setToInputValue(newInputValue);
+                  debouncedToFetch(newInputValue);
+                }}
+                onChange={(event, value) => {
+                  if (value && typeof value !== 'string') {
+                    setTo(value.value);
+                    setToInputValue(value.displayText || value.label);
+                  }
+                }}
+                open={toOptions.length > 0}
+                onClose={() => setToOptions([])}
+                filterOptions={(options) => options}
+                renderOption={(props, option) => (
+                  <li
+                    {...props}
+                    style={{
+                      padding: "10px 16px",
+                      paddingLeft: option.isChild ? "40px" : "16px",
+                      fontWeight: option.isParent ? 600 : 400,
+                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                      borderBottom: "1px solid #eee",
+                      cursor: option.isParent ? "default" : "pointer",
+                      pointerEvents: option.isParent ? "none" : "auto",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: option.isParent ? 600 : 400,
+                          color: "text.primary"
+                        }}
+                      >
+                        {option.label}
                       </Typography>
-                    )}
-                  </Box>
-                </li>
-              )}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="To"
-                  placeholder="Los Angeles (LAX)"
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FlightLand />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Grid>
+                      {option.isChild && option.distance && (
+                        <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                          {option.distance} from city center
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Los Angeles (LAX)"
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <FlightLand />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
 
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-              Departure
-            </Typography>
-            <TextField
-              label=""
-              type="date"
-              fullWidth
-              value={departDate}
-              onChange={(e) => setDepartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
+            {/* Departure */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+                Departure
+              </Typography>
+              <TextField
+                type="date"
+                fullWidth
+                value={departDate}
+                onChange={(e) => setDepartDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarToday />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Return */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+                Return
+              </Typography>
+              <TextField
+                type="date"
+                fullWidth
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                disabled={tripType === "oneway"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarToday />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Passengers */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+                Passengers
+              </Typography>
+              <Select
+                fullWidth
+                value={passengers}
+                onChange={(e) => setPassengers(Number(e.target.value))}
+                startAdornment={
                   <InputAdornment position="start">
-                    <CalendarToday />
+                    <Person />
                   </InputAdornment>
-                ),
-              }}
-            />
+                }
+                displayEmpty
+                renderValue={(selected) => `${selected} Adult`}
+              >
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <MenuItem key={num} value={num}>
+                    {num} {num === 1 ? "Adult" : "Passengers"}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-              Return
-            </Typography>
-            <TextField
-              type="date"
-              fullWidth
-              value={returnDate}
-              onChange={(e) => setReturnDate(e.target.value)}
-              disabled={tripType === "oneway"}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CalendarToday />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-              Passengers
-            </Typography>
-            <Select
-              fullWidth
-              value={passengers}
-              onChange={(e) => setPassengers(Number(e.target.value))}
-              startAdornment={
-                <InputAdornment position="start">
-                  <Person />
-                </InputAdornment>
-              }
-              displayEmpty
-              renderValue={(selected) => `${selected} Adult`}
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <MenuItem key={num} value={num}>
-                  {num} {num === 1 ? "Adult" : "Passengers"}
-                </MenuItem>
-              ))}
-            </Select>
-          </Grid>
 
           <Grid item xs={12} sx={{ mt: { xs: 2, md: 3 } }}>
             <Button
               variant="contained"
               fullWidth
               startIcon={<Search />}
-              onClick={() => navigate("/results")}
+              onClick={() =>
+                navigate("/results", {
+                  state: {
+                    tripType,
+                    from,
+                    to,
+                    departDate,
+                    returnDate,
+                    passengers,
+                  },
+                })
+              }
+
               sx={{
                 bgcolor: "#2c39e8",
                 color: "#fff",
