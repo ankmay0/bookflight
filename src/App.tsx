@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import FlightSearch from "./components/Flightsearch";
 import FlightSearchResults from "./components/FlightSearchResults/FlightSearchResults";
+import PassengerDetails from "./components/PassengerDetails"; 
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<FlightSearch />} />
         <Route path="/results" element={<FlightSearchResults />} />
+        <Route path="/passenger-details" element={<PassengerDetails />} /> 
       </Routes>
       <Footer />
     </Router>

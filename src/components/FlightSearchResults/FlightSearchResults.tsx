@@ -19,7 +19,8 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SidebarFilters from "./SidebarFilters";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
 
 // Type for flight data
 interface Trip {
@@ -66,6 +67,9 @@ const FlightSearchResults: React.FC = () => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const location = useLocation();
   const state = location.state as LocationState || {};
+
+  const navigate = useNavigate();
+
 
   const { from, to, departDate, passengers } = state;
 
@@ -261,9 +265,16 @@ const FlightSearchResults: React.FC = () => {
 
                   {/* Book Button */}
                   <Box sx={{ minWidth: 130 }}>
-                    <Button variant="contained" color="primary" fullWidth sx={{ textTransform: "none" }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{ textTransform: "none" }}
+                      onClick={() => navigate("/passenger-details", { state: { flight } })}
+                    >
                       Select
                     </Button>
+
                   </Box>
                 </Paper>
               );
