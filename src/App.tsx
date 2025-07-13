@@ -4,7 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import FlightSearch from "./components/Flightsearch";
 import FlightSearchResults from "./components/FlightSearchResults/FlightSearchResults";
-import PassengerDetails from "./components/PassengerDetails"; 
+import PassengerDetails from "./components/flightDetailAndPassengerDetails/PassengerDetails"; 
 
 const App = () => {
   return (
