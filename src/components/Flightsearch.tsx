@@ -49,11 +49,26 @@ const FlightSearch: React.FC = () => {
     []
   );
 
-
-
   useEffect(() => {
     console.log("Options:", fromOptions);
   }, [fromOptions]);
+
+  const validateInputs = () => {
+    if (!from || !to) {
+      alert("Please select both 'From' and 'To' locations.");
+      return false;
+    }
+    if (!departDate) {
+      alert("Please select a departure date.");
+      return false;
+    }
+    if (tripType === "round" && !returnDate) {
+      alert("Please select a return date for round trips.");
+      return false;
+    }
+    return true;
+  };
+
 
   return (
     <Box
@@ -362,7 +377,9 @@ const FlightSearch: React.FC = () => {
               variant="contained"
               fullWidth
               startIcon={<Search />}
-              onClick={() =>
+              onClick={() => {
+                if (!validateInputs()) return;
+
                 navigate("/results", {
                   state: {
                     tripType,
@@ -372,9 +389,8 @@ const FlightSearch: React.FC = () => {
                     returnDate,
                     passengers,
                   },
-                })
-              }
-
+                });
+              }}
               sx={{
                 bgcolor: "#2c39e8",
                 color: "#fff",
@@ -389,6 +405,7 @@ const FlightSearch: React.FC = () => {
             >
               Search Flights
             </Button>
+
           </Grid>
         </Grid>
       </Box>
