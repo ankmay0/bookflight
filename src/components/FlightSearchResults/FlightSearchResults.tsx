@@ -13,8 +13,14 @@ import {
   Chip,
   useMediaQuery,
   CircularProgress,
+  Divider,
 } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SidebarFilters from "./SidebarFilters";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -76,7 +82,7 @@ const FlightSearchResults: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const state = location.state as LocationState || {};
+  const state = (location.state as LocationState) || {};
   const { from, to, departDate, passengers } = state;
 
   useEffect(() => {
@@ -103,16 +109,11 @@ const FlightSearchResults: React.FC = () => {
   useEffect(() => {
     let updated = flights.filter((flight) => {
       const price = parseFloat(flight.totalPrice || flight.basePrice || "0");
-      const airlineList = flight.trips.flatMap(t => t.legs.map(l => l.operatingCarrierCode));
+      const airlineList = flight.trips.flatMap((t) => t.legs.map((l) => l.operatingCarrierCode));
 
       if (price < priceRange[0] || price > priceRange[1]) return false;
-      if (selectedAirlines.length > 0 && !selectedAirlines.some(a => airlineList.includes(a)))
-        return false;
-      if (
-        selectedStops.length > 0 &&
-        !selectedStops.some((stop) => stop === `${flight.trips[0].stops}`)
-      )
-        return false;
+      if (selectedAirlines.length > 0 && !selectedAirlines.some((a) => airlineList.includes(a))) return false;
+      if (selectedStops.length > 0 && !selectedStops.some((stop) => stop === `${flight.trips[0].stops}`)) return false;
 
       if (selectedTimes.length > 0) {
         const hour = new Date(flight.trips[0].legs[0].departureDateTime).getHours();
@@ -138,16 +139,10 @@ const FlightSearchResults: React.FC = () => {
   }, [priceRange, selectedTimes, selectedStops, selectedAirlines, sortBy, flights]);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#f9f9f9" }}>
-      <Box
-        display="flex"
-        flexDirection={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        mb={3}
-        gap={2}
-      >
-        <Typography variant="h6">
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#eef2f5" }}>
+      <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} mb={3} gap={2}>
+        <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AirplanemodeActiveIcon color="primary" />
           {loading ? "Loading flights..." : `${filteredFlights.length} flights found`}
         </Typography>
 
@@ -161,11 +156,7 @@ const FlightSearchResults: React.FC = () => {
             </Select>
           </FormControl>
 
-          <Button
-            variant="outlined"
-            startIcon={<FilterListIcon />}
-            onClick={() => setShowFilters((prev) => !prev)}
-          >
+          <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setShowFilters((prev) => !prev)}>
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
         </Stack>
@@ -195,53 +186,59 @@ const FlightSearchResults: React.FC = () => {
           ) : (
             <Stack spacing={3}>
               {filteredFlights.map((flight, idx) => (
-                <Paper key={idx} sx={{ p: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {flight.trips[0].legs[0].operatingCarrierCode}{" "}
-                    {flight.trips[0].legs[0].flightNumber} &mdash; ₹{flight.totalPrice}
-                  </Typography>
+                <Paper
+                  key={idx}
+                  elevation={4}
+                  sx={{ borderRadius: 3, p: 3, backgroundColor: "#ffffff", boxShadow: "0px 4px 20px rgba(0,0,0,0.1)" }}
+                >
+                  <Grid container alignItems="center" justifyContent="space-between">
+                    <Grid item>
+                      <Typography variant="h6" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <AirplanemodeActiveIcon /> {flight.trips[0].legs[0].operatingCarrierCode} {flight.trips[0].legs[0].flightNumber}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {flight.trips.length > 1 ? "Multiple Trips" : "Direct"} | ₹{flight.totalPrice}
+                      </Typography>
+                    </Grid>
+                    <Grid item>
+                      <Button variant="contained" size="small" onClick={() => navigate("/passenger-details", { state: { flight } })}>
+                        Select
+                      </Button>
+                    </Grid>
+                  </Grid>
+
+                  <Divider sx={{ my: 2 }} />
 
                   {flight.trips.map((trip, tIdx) => (
-                    <Box key={tIdx} mt={1}>
+                    <Box key={tIdx}>
                       {trip.legs.map((leg, lIdx) => (
-                        <Grid container spacing={1} key={lIdx}>
+                        <Grid container spacing={2} alignItems="center" justifyContent="space-between" key={lIdx} sx={{ mb: 1 }}>
                           <Grid item xs={12} md={3}>
                             <Typography>
-                              {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}{" "}
-                              ({leg.departureAirport})
+                              <FlightTakeoffIcon fontSize="small" sx={{ mr: 1 }} />
+                              <strong>{new Date(leg.departureDateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong> ({leg.departureAirport})
                             </Typography>
                           </Grid>
                           <Grid item xs={12} md={3}>
                             <Typography>
-                              {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}{" "}
-                              ({leg.arrivalAirport})
+                              <FlightLandIcon fontSize="small" sx={{ mr: 1 }} />
+                              <strong>{new Date(leg.arrivalDateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong> ({leg.arrivalAirport})
                             </Typography>
                           </Grid>
                           <Grid item xs={12} md={3}>
-                            <Typography>{leg.duration}</Typography>
+                            <Typography>
+                              <AccessTimeIcon fontSize="small" sx={{ mr: 1 }} />{leg.duration}
+                            </Typography>
                           </Grid>
                           <Grid item xs={12} md={3}>
-                            <Typography>Aircraft: {leg.aircraftCode}</Typography>
+                            <Typography>
+                              <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} />Aircraft: {leg.aircraftCode}
+                            </Typography>
                           </Grid>
                         </Grid>
                       ))}
                     </Box>
                   ))}
-
-                  <Box mt={2}>
-                    <Button
-                      variant="contained"
-                      onClick={() => navigate("/passenger-details", { state: { flight } })}
-                    >
-                      Select
-                    </Button>
-                  </Box>
                 </Paper>
               ))}
             </Stack>
