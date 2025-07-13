@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -10,14 +9,16 @@ import {
   MenuItem,
   IconButton,
   Divider,
+  Stack
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const PassengerDetails: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const flight = (location.state as { flight?: any })?.flight;
+interface PassengerFormProps {
+  flight: any;
+  navigate: any;
+}
 
+const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate }) => {
   const [passengers, setPassengers] = useState([
     { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
   ]);
@@ -60,11 +61,9 @@ const PassengerDetails: React.FC = () => {
     navigate("/");
   };
 
-  if (!flight) return <Typography>No flight selected. Please go back.</Typography>;
-
   return (
-    <Grid container spacing={3} p={3}>
-      {/* Left Passenger Form */}
+    <>
+      {/* Passenger Form Section */}
       <Grid item xs={12} md={8}>
         <Typography variant="h5" gutterBottom>
           Passenger Details
@@ -154,6 +153,7 @@ const PassengerDetails: React.FC = () => {
           </Button>
         </Paper>
 
+        {/* Contact Info */}
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Contact Information
@@ -183,7 +183,7 @@ const PassengerDetails: React.FC = () => {
         </Paper>
       </Grid>
 
-      {/* Right Booking Summary */}
+      {/* Booking Summary Section */}
       <Grid item xs={12} md={4}>
         <Paper sx={{ p: 3, display: "flex", flexDirection: "column", height: "100%" }}>
           <Typography variant="h6" gutterBottom>
@@ -230,8 +230,8 @@ const PassengerDetails: React.FC = () => {
           </Box>
         </Paper>
       </Grid>
-    </Grid>
+    </>
   );
 };
 
-export default PassengerDetails;
+export default PassengerForm;
