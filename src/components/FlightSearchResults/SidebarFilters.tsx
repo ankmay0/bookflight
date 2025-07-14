@@ -15,17 +15,8 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ConnectingAirportsIcon from "@mui/icons-material/ConnectingAirports";
 import FlightIcon from "@mui/icons-material/Flight";
+import { SidebarFiltersProps } from "../Types/FlightTypes";
 
-interface SidebarFiltersProps {
-  priceRange: number[];
-  setPriceRange: React.Dispatch<React.SetStateAction<number[]>>;
-  selectedTimes: string[];
-  setSelectedTimes: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedStops: string[];
-  setSelectedStops: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedAirlines: string[];
-  setSelectedAirlines: React.Dispatch<React.SetStateAction<string[]>>;
-}
 
 const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   priceRange,
@@ -36,6 +27,10 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   setSelectedStops,
   selectedAirlines,
   setSelectedAirlines,
+  availableStops,
+  availableAirlines,
+  minPrice,
+  maxPrice,
 }) => {
   const handleCheckboxChange = (
     value: string,
@@ -69,11 +64,12 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         <Slider
           value={priceRange}
           onChange={(_, value) => setPriceRange(value as number[])}
-          min={200}
-          max={1500}
+          min={minPrice}
+          max={maxPrice}
           valueLabelDisplay="auto"
         />
-        <Chip label={`₹${priceRange[0]} - ₹${priceRange[1]}`} size="small" color="primary" />
+        <Chip label={`₹${minPrice} - ₹${maxPrice}`} size="small" color="primary" />
+
       </Box>
 
       <Box mb={3}>
@@ -101,7 +97,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           <ConnectingAirportsIcon fontSize="small" /> Stops
         </Typography>
         <FormGroup>
-          {["Nonstop", "1 Stop", "2+ Stops"].map((stop) => (
+          {availableStops.map((stop) => (
             <FormControlLabel
               key={stop}
               control={
@@ -121,7 +117,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           <FlightIcon fontSize="small" /> Airlines
         </Typography>
         <FormGroup>
-          {["American Airlines", "Delta Airlines", "United Airlines"].map((airline) => (
+          {availableAirlines.map((airline) => (
             <FormControlLabel
               key={airline}
               control={

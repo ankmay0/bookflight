@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,16 +9,16 @@ import {
   MenuItem,
   IconButton,
   Divider,
-  Stack
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 interface PassengerFormProps {
   flight: any;
   navigate: any;
+  passengersNumber?: number;
 }
 
-const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate }) => {
+const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passengersNumber }) => {
   const [passengers, setPassengers] = useState([
     { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
   ]);
@@ -27,6 +27,20 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate }) => {
     email: "",
     phone: "",
   });
+
+  // Initialize passenger fields according to passengersNumber on mount
+  useEffect(() => {
+    if (passengersNumber && passengersNumber > 1) {
+      const initialPassengers = Array.from({ length: passengersNumber }, () => ({
+        title: "Mr.",
+        firstName: "",
+        lastName: "",
+        dob: "",
+        passport: "",
+      }));
+      setPassengers(initialPassengers);
+    }
+  }, [passengersNumber]);
 
   const handlePassengerChange = (
     index: number,
@@ -38,9 +52,9 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate }) => {
   };
 
   const addPassenger = () => {
-    setPassengers([
-      ...passengers,
-      { title: "", firstName: "", lastName: "", dob: "", passport: "" },
+    setPassengers((prev) => [
+      ...prev,
+      { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
     ]);
   };
 
@@ -54,12 +68,15 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate }) => {
   };
 
   const handleConfirm = () => {
-    console.log("Passengers:", passengers);
-    console.log("Contact Info:", contact);
-    console.log("Selected Flight:", flight);
-    alert("Booking Confirmed!");
-    navigate("/");
-  };
+  navigate("/review-confirmation", {
+    state: {
+      passengers,
+      contact,
+      flight,
+    },
+  });
+};
+
 
   return (
     <>

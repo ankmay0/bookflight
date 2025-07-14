@@ -9,7 +9,7 @@ import ImportantNotice from "./ImportantNotice";
 const PassengerDetails: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const flight = (location.state as { flight?: any })?.flight;
+   const { flight, passengers } = location.state as { flight?: any; passengers?: number };
 
   if (!flight) return <Typography>No flight selected. Please go back.</Typography>;
 
@@ -18,7 +18,7 @@ const PassengerDetails: React.FC = () => {
       <FlightDetails flight={flight} />
       <CancellationPolicy flight={flight}/>
       <ImportantNotice flight={flight} />
-      <PassengerForm flight={flight} navigate={navigate} />
+      <PassengerForm flight={flight} passengersNumber={passengers} navigate={navigate} />
     </Grid>
   );
 };

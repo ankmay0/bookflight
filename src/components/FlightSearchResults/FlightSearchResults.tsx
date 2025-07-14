@@ -10,7 +10,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Chip,
   useMediaQuery,
   CircularProgress,
   Divider,
@@ -23,49 +22,9 @@ import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SidebarFilters from "./SidebarFilters";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Flight, LocationState } from "../Types/FlightTypes";
 
-interface Leg {
-  legNo: string;
-  flightNumber: string;
-  operatingCarrierCode: string;
-  aircraftCode: string;
-  departureAirport: string;
-  departureTerminal: string;
-  departureDateTime: string;
-  arrivalAirport: string;
-  arrivalTerminal: string;
-  arrivalDateTime: string;
-  duration: string;
-  layoverAfter: string | null;
-}
 
-interface Trip {
-  from: string;
-  to: string;
-  stops: number;
-  totalFlightDuration: string;
-  totalLayoverDuration: string;
-  legs: Leg[];
-}
-
-interface Flight {
-  oneWay: boolean;
-  seatsAvailable: number;
-  currencyCode: string;
-  basePrice: string;
-  totalPrice: string;
-  trips: Trip[];
-  pricingAdditionalInfo?: string;
-}
-
-interface LocationState {
-  tripType?: string;
-  from?: string;
-  to?: string;
-  departDate?: string;
-  returnDate?: string;
-  passengers?: number;
-}
 
 const FlightSearchResults: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -77,6 +36,12 @@ const FlightSearchResults: React.FC = () => {
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
+  const [availableStops, setAvailableStops] = useState<string[]>([]);
+  const [availableAirlines, setAvailableAirlines] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
+
+
 
   const isMobile = useMediaQuery("(max-width:600px)");
   const location = useLocation();
@@ -84,6 +49,14 @@ const FlightSearchResults: React.FC = () => {
 
   const state = (location.state as LocationState) || {};
   const { from, to, departDate, passengers } = state;
+
+
+  const mapStopsToLabel = (stops: number) => {
+    if (stops === 0) return "Nonstop";
+    if (stops === 1) return "1 Stop";
+    return "2+ Stops";
+  };
+
 
   useEffect(() => {
     if (!from || !to || !departDate || !passengers) return;
@@ -98,8 +71,31 @@ const FlightSearchResults: React.FC = () => {
       .then((data: Flight[]) => {
         setFlights(data);
         setFilteredFlights(data);
+
+        const prices = data.map(f => parseFloat(f.totalPrice || f.basePrice || "0"));
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+
+        setMinPrice(min);
+        setMaxPrice(max);
+
+        const stopsSet = new Set<string>();
+        const airlinesSet = new Set<string>();
+
+        data.forEach((flight) => {
+          stopsSet.add(mapStopsToLabel(flight.trips[0].stops));
+          flight.trips.forEach((trip) =>
+            trip.legs.forEach((leg) => airlinesSet.add(leg.operatingCarrierCode))
+          );
+        });
+
+        setAvailableStops(Array.from(stopsSet));
+        setAvailableAirlines(Array.from(airlinesSet));
+
         setLoading(false);
       })
+
+
       .catch((err) => {
         console.error("Error loading data:", err);
         setLoading(false);
@@ -113,7 +109,9 @@ const FlightSearchResults: React.FC = () => {
 
       if (price < priceRange[0] || price > priceRange[1]) return false;
       if (selectedAirlines.length > 0 && !selectedAirlines.some((a) => airlineList.includes(a))) return false;
-      if (selectedStops.length > 0 && !selectedStops.some((stop) => stop === `${flight.trips[0].stops}`)) return false;
+      if (selectedStops.length > 0 && !selectedStops.includes(mapStopsToLabel(flight.trips[0].stops))) return false;
+
+
 
       if (selectedTimes.length > 0) {
         const hour = new Date(flight.trips[0].legs[0].departureDateTime).getHours();
@@ -136,6 +134,7 @@ const FlightSearchResults: React.FC = () => {
     }
 
     setFilteredFlights(updated);
+    
   }, [priceRange, selectedTimes, selectedStops, selectedAirlines, sortBy, flights]);
 
   return (
@@ -174,7 +173,13 @@ const FlightSearchResults: React.FC = () => {
               setSelectedStops={setSelectedStops}
               selectedAirlines={selectedAirlines}
               setSelectedAirlines={setSelectedAirlines}
+              availableStops={availableStops}
+              availableAirlines={availableAirlines}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
             />
+
+
           </Grid>
         )}
 
@@ -201,8 +206,9 @@ const FlightSearchResults: React.FC = () => {
                       </Typography>
                     </Grid>
                     <Grid item>
-                      <Button variant="contained" size="small" onClick={() => navigate("/passenger-details", { state: { flight } })}>
+                      <Button variant="contained" size="small" onClick={() => navigate("/passenger-details", { state: { flight , passengers} })}>
                         Select
+                        
                       </Button>
                     </Grid>
                   </Grid>
