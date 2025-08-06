@@ -6,9 +6,7 @@ import FlightSearch from "./components/Flightsearch";
 import FlightSearchResults from "./components/FlightSearchResults/FlightSearchResults";
 import PassengerDetails from "./components/flightDetailAndPassengerDetails/PassengerDetails"; 
 import ReviewConfirmation from "./components/ReviewConfirmation";
-import Node from "./components/Nodes";
 import BookingSuccess from "./components/BookingSuccess";
-// import { AnimatedSVGEdge } from "./reactFlow/AnimatedSVGEdge";
 
 const App = () => {
   return (
@@ -19,9 +17,7 @@ const App = () => {
         <Route path="/results" element={<FlightSearchResults />} />
         <Route path="/passenger-details" element={<PassengerDetails />} /> 
         <Route path="/review-confirmation" element={<ReviewConfirmation />} />
-        <Route path="/node" element={<Node />} />
         <Route path="/booking-success" element={<BookingSuccess />} />
-        {/* <Route path="/animated-edge" element={<AnimatedSVGEdge />} /> */}
       </Routes>
       <Footer />
     </Router>
