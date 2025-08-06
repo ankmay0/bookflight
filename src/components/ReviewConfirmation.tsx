@@ -6,35 +6,135 @@ import {
   Paper,
   Typography,
   Divider,
-  Grid,
   Stack,
-  Container
+  Container,
 } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
+import axios from "axios";
+
+type TravelerPayload = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  email: string;
+  phones: { deviceType: string; countryCallingCode: string; number: string }[];
+  documents: {
+    documentType: string;
+    number: string;
+    issuanceDate: string;
+    expiryDate: string;
+    issuanceCountry: string;
+    validityCountry: string;
+    nationality: string;
+    birthPlace: string;
+    issuanceLocation: string;
+    holder: boolean;
+  }[];
+};
 
 const ReviewConfirmation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { passengers, contact, flight } = location.state as any;
+  const { passengers = [], contact = {}, flight } =
+    (location.state as any) ?? {};
 
-  if (!passengers || !contact || !flight) {
-    return <Typography>Missing booking details. Please start again.</Typography>;
+  if (!flight || passengers.length === 0) {
+    return (
+      <Typography>Missing booking details. Please start again.</Typography>
+    );
   }
 
+  /* -------------------------------------------------- */
+  /* EVENT HANDLERS                                     */
+  /* -------------------------------------------------- */
+  const handleConfirmBooking = async () => {
+    try {
+      // 1. Locate flight-offer JSON string
+      const raw =
+        flight.flightOffer ?? flight.pricingAdditionalInfo ?? null;
+      if (!raw) {
+        alert("flightOffer missing – cannot book");
+        return;
+      }
+      const flightOfferStr =
+        typeof raw === "string" ? raw : JSON.stringify(raw);
+
+      // 2. Build travelers array
+      const travelers: TravelerPayload[] = passengers.map(
+        (p: any, idx: number) => ({
+          id: (idx + 1).toString(),
+          firstName: p.firstName,
+          lastName: p.lastName,
+          dateOfBirth: p.dob,
+          gender: p.gender || "MALE",
+          email: contact.email,
+          phones: [
+            {
+              deviceType: "MOBILE",
+              countryCallingCode: "91",
+              number: contact.phone,
+            },
+          ],
+          documents: [
+            {
+              documentType: "PASSPORT",
+              number: p.passport || "UNKNOWN",
+              issuanceDate: "2015-07-22",
+              expiryDate: "2035-11-30",
+              issuanceCountry: "IN",
+              validityCountry: "IN",
+              nationality: "IN",
+              birthPlace: "Delhi",
+              issuanceLocation: "Delhi",
+              holder: true,
+            },
+          ],
+        })
+      );
+
+      // 3. POST booking and use response directly
+      const { data: bookingData } = await axios.post(
+        "http://localhost:8080/booking/flight-order",
+        { flightOffer: flightOfferStr, travelers }
+      );
+
+      navigate("/booking-success", { state: bookingData });
+    } catch (err: any) {
+      const msg =
+        err?.response?.data
+          ? JSON.stringify(err.response.data)
+          : err.message || "Unknown error";
+      alert(`Booking failed: ${msg}`);
+      console.error("Booking failed:", err);
+    }
+  };
+
+  /* -------------------------------------------------- */
+  /* RENDER                                             */
+  /* -------------------------------------------------- */
   return (
     <Box bgcolor="#f5f7fa" minHeight="100vh" py={4}>
       <Container maxWidth="md">
-        <Typography variant="h4" gutterBottom fontWeight={600} textAlign="center">
-          ✈️ Review & Confirm Booking
+        <Typography
+          variant="h4"
+          gutterBottom
+          fontWeight={600}
+          textAlign="center"
+        >
+          ✈️ Review &amp; Confirm Booking
         </Typography>
 
-        {/* Flight Summary */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}>
+        {/* -------- Flight Summary -------- */}
+        <Paper
+          sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}
+        >
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
             <FlightTakeoffIcon color="primary" />
             <Typography variant="h6" fontWeight={600}>
@@ -42,7 +142,8 @@ const ReviewConfirmation: React.FC = () => {
             </Typography>
           </Stack>
           <Typography>
-            <strong>{flight.trips[0].from}</strong> → <strong>{flight.trips[flight.trips.length - 1].to}</strong>
+            <strong>{flight.trips[0].from}</strong> →{" "}
+            <strong>{flight.trips[flight.trips.length - 1].to}</strong>
           </Typography>
           <Typography>
             {flight.trips[0].airline} {flight.trips[0].flightNumber}
@@ -53,15 +154,16 @@ const ReviewConfirmation: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* Passenger Details */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}>
+        {/* -------- Passenger Details -------- */}
+        <Paper
+          sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}
+        >
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
             <AirlineSeatReclineNormalIcon color="secondary" />
             <Typography variant="h6" fontWeight={600}>
               Passenger Details
             </Typography>
           </Stack>
-
           {passengers.map((p: any, idx: number) => (
             <Box key={idx} mb={2}>
               <Typography fontWeight={600}>
@@ -70,15 +172,19 @@ const ReviewConfirmation: React.FC = () => {
               </Typography>
               <Typography variant="body2">DOB: {p.dob}</Typography>
               {p.passport && (
-                <Typography variant="body2">Passport: {p.passport}</Typography>
+                <Typography variant="body2">
+                  Passport: {p.passport}
+                </Typography>
               )}
               {idx !== passengers.length - 1 && <Divider sx={{ my: 1 }} />}
             </Box>
           ))}
         </Paper>
 
-        {/* Contact Info */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}>
+        {/* -------- Contact Info -------- */}
+        <Paper
+          sx={{ p: 3, mb: 3, borderRadius: 3, border: "1px solid #d0d7de" }}
+        >
           <Stack direction="row" alignItems="center" spacing={1} mb={1}>
             <Typography variant="h6" fontWeight={600}>
               📞 Contact Information
@@ -94,38 +200,41 @@ const ReviewConfirmation: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* Total */}
+        {/* -------- Total -------- */}
         <Paper
           sx={{
             p: 3,
             mb: 3,
             borderRadius: 3,
             bgcolor: "#e0f2f1",
-            border: "1px solid #b2dfdb"
+            border: "1px solid #b2dfdb",
           }}
         >
           <Typography variant="h6" fontWeight={600}>
             💸 Total Amount
           </Typography>
-          <Typography variant="h5" color="primary.main" fontWeight={700} mt={1}>
+          <Typography
+            variant="h5"
+            color="primary.main"
+            fontWeight={700}
+            mt={1}
+          >
             ₹{(parseFloat(flight.totalPrice) * passengers.length).toFixed(2)}
           </Typography>
         </Paper>
 
+        {/* -------- Confirm Button -------- */}
         <Button
           variant="contained"
           size="large"
           fullWidth
           color="primary"
+          onClick={handleConfirmBooking}
           sx={{
             borderRadius: 3,
             py: 1.5,
             fontSize: "1rem",
-            textTransform: "none"
-          }}
-          onClick={() => {
-            alert("🎉 Booking Confirmed!");
-            navigate("/");
+            textTransform: "none",
           }}
         >
           Confirm Booking
