@@ -256,7 +256,7 @@ const FlightSearch: React.FC = () => {
               onChange={(event, value) => {
                 if (value && typeof value !== "string") {
                   setFrom(value.value);
-                  setFromInputValue(value.displayText || value.label);
+                  setFromInputValue(value.label); // Use label to include distance
                 }
               }}
               filterOptions={(options) => options}
@@ -274,27 +274,33 @@ const FlightSearch: React.FC = () => {
                     cursor: option.isParent ? "default" : "pointer",
                     pointerEvents: option.isParent ? "none" : "auto",
                     display: "flex",
-                    alignItems: "center",
+                    flexDirection: "column", // Stack vertically
+                    alignItems: "flex-start", // Align to start
                   }}
                 >
-                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: option.isParent ? 600 : 400,
+                      color: "text.primary",
+                    }}
+                  >
+                    {option.label}
+                  </Typography>
+                  {option.distance && (
                     <Typography
-                      variant="body2"
+                      variant="caption"
                       sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary",
+                        color: "text.secondary",
+                        mt: 0.3,
                       }}
                     >
-                      {option.label}
+                      {option.distance} from city center
                     </Typography>
-                    {option.isChild && option.distance && (
-                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                        {option.distance} from city center
-                      </Typography>
-                    )}
-                  </Box>
+                  )}
                 </li>
               )}
+
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -312,7 +318,7 @@ const FlightSearch: React.FC = () => {
                         {params.InputProps.endAdornment}
                       </>
                     ),
-                    sx: { borderRadius: "14px" }, // Rounded corners
+                    sx: { borderRadius: "14px" },
                   }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
                 />
@@ -336,7 +342,7 @@ const FlightSearch: React.FC = () => {
               onChange={(event, value) => {
                 if (value && typeof value !== "string") {
                   setTo(value.value);
-                  setToInputValue(value.displayText || value.label);
+                  setToInputValue(value.label); // Use label to include distance
                 }
               }}
               filterOptions={(options) => options}
@@ -354,27 +360,33 @@ const FlightSearch: React.FC = () => {
                     cursor: option.isParent ? "default" : "pointer",
                     pointerEvents: option.isParent ? "none" : "auto",
                     display: "flex",
-                    alignItems: "center",
+                    flexDirection: "column", // Stack vertically
+                    alignItems: "flex-start", // Align to start
                   }}
                 >
-                  <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: option.isParent ? 600 : 400,
+                      color: "text.primary",
+                    }}
+                  >
+                    {option.label}
+                  </Typography>
+                  {option.distance && (
                     <Typography
-                      variant="body2"
+                      variant="caption"
                       sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary",
+                        color: "text.secondary",
+                        mt: 0.3,
                       }}
                     >
-                      {option.label}
+                      {option.distance} from city center
                     </Typography>
-                    {option.isChild && option.distance && (
-                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                        {option.distance} from city center
-                      </Typography>
-                    )}
-                  </Box>
+                  )}
                 </li>
               )}
+
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -392,7 +404,7 @@ const FlightSearch: React.FC = () => {
                         {params.InputProps.endAdornment}
                       </>
                     ),
-                    sx: { borderRadius: "14px" }, // Rounded corners
+                    sx: { borderRadius: "14px" },
                   }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
                 />
@@ -587,6 +599,28 @@ const FlightSearch: React.FC = () => {
               }}
             >
               Search Flights
+            </Button>
+          </Grid>
+
+          <Grid item xs={12} sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => navigate('/manage-reservation')}
+              sx={{
+                fontWeight: 'bold',
+                fontSize: '16px',
+                height: '56px',
+                borderRadius: '14px',
+                borderColor: '#2c39e8',
+                color: '#2c39e8',
+                ":hover": {
+                  borderColor: '#1f2ac4',
+                  color: '#1f2ac4',
+                },
+              }}
+            >
+              Check Flight Status / Manage Reservation
             </Button>
           </Grid>
         </Grid>

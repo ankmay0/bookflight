@@ -80,6 +80,9 @@ export const fetchLocations = async (
         // Check for groupData (your backend) or group_data.simpleAirports (working environment)
         const airports = item.groupData || (item.group_data && item.group_data.simpleAirports) || [];
         if (Array.isArray(airports)) {
+          // Determine if there are multiple airports for this city
+          const hasMultipleAirports = airports.length > 1;
+
           airports.forEach((airport: any) => {
             console.log("Processing airport:", JSON.stringify(airport, null, 2));
             const cityInfo = airport.city ? `, ${airport.city}` : "";
@@ -98,14 +101,17 @@ export const fetchLocations = async (
               );
               distance = `${dist.toFixed(1)} km`;
             }
+            // Include distance in label only if there are multiple airports
+            const airportLabel = `${airport.name} (${airport.iata})${cityInfo}`;
             formattedOptions.push({
-              label: `${airport.name} (${airport.iata})${cityInfo}`, // Removed distance from label
+              label: airportLabel,
               value: airport.iata,
               isParent: false,
               isChild: true,
               displayText: `${airport.name} (${airport.iata})`,
-              distance: distance,
+              distance: distance, // Keep distance in a separate field
             });
+
           });
         }
       } else if (item.subType === "AIRPORT") {
