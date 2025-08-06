@@ -1,5 +1,6 @@
 import axios from "axios";
 import debounce from "lodash.debounce";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Calculates the distance between two coordinates using the Haversine formula.
@@ -32,26 +33,40 @@ export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2
  */
 export const fetchLocations = async (
   keyword: string,
-  setOptions: React.Dispatch<React.SetStateAction<any[]>>
+  setOptions: React.Dispatch<React.SetStateAction<any[]>>,
+  setLoading?: React.Dispatch<React.SetStateAction<boolean>>,
+  setError?: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
   if (!keyword) {
+    console.log("No keyword provided, clearing options");
     setOptions([]);
+    if (setLoading) setLoading(false);
     return;
   }
   try {
+    if (setLoading) setLoading(true);
+    console.log(`Making API request for keyword: "${keyword}"`);
     const res = await axios.get(
       `http://localhost:8080/locations/search?keyword=${encodeURIComponent(keyword)}`
     );
+    console.log("Raw API Response:", JSON.stringify(res.data, null, 2));
     const data = res.data;
+
+    // Handle both array and object response structures
+    const locationResponses = Array.isArray(data) ? data : data.locationResponses;
 
     const formattedOptions: any[] = [];
 
-    if (!data.locationResponses || !Array.isArray(data.locationResponses)) {
-      setOptions([]); // fallback
+    if (!locationResponses || !Array.isArray(locationResponses)) {
+      console.warn("Invalid or empty locationResponses:", JSON.stringify(data, null, 2));
+      setOptions([]);
+      if (setLoading) setLoading(false);
+      if (setError) setError("Invalid response from server");
       return;
     }
 
-    data.locationResponses.forEach((item: any) => {
+    locationResponses.forEach((item: any) => {
+      console.log("Processing item:", JSON.stringify(item, null, 2));
       if (item.subType === "CITY") {
         const cityName = item.name || `${item.iata} Metropolitan Area`;
         formattedOptions.push({
@@ -62,15 +77,12 @@ export const fetchLocations = async (
           displayText: `${cityName} (${item.iata})`,
         });
 
-        // group_data may be undefined:
-        if (
-          item.group_data &&
-          item.group_data.simpleAirports &&
-          Array.isArray(item.group_data.simpleAirports)
-        ) {
-          item.group_data.simpleAirports.forEach((airport: any) => {
+        // Check for groupData (your backend) or group_data.simpleAirports (working environment)
+        const airports = item.groupData || (item.group_data && item.group_data.simpleAirports) || [];
+        if (Array.isArray(airports)) {
+          airports.forEach((airport: any) => {
+            console.log("Processing airport:", JSON.stringify(airport, null, 2));
             const cityInfo = airport.city ? `, ${airport.city}` : "";
-            // Calculate distance if both city and airport have lat/lng
             let distance: string | undefined = undefined;
             if (
               typeof item.latitude === "number" &&
@@ -87,7 +99,7 @@ export const fetchLocations = async (
               distance = `${dist.toFixed(1)} km`;
             }
             formattedOptions.push({
-              label: `${airport.name} (${airport.iata})${cityInfo}${distance ? ` — ${distance}` : ""}`,
+              label: `${airport.name} (${airport.iata})${cityInfo}`, // Removed distance from label
               value: airport.iata,
               isParent: false,
               isChild: true,
@@ -108,10 +120,14 @@ export const fetchLocations = async (
       }
     });
 
+    console.log("Formatted Options:", JSON.stringify(formattedOptions, null, 2));
     setOptions(formattedOptions);
+    if (setLoading) setLoading(false);
   } catch (error) {
+    console.error("Failed to fetch locations:", error);
     setOptions([]);
-    console.error("Failed to fetch locations", error);
+    if (setLoading) setLoading(false);
+    if (setError) setError("Failed to load locations. Please try again.");
   }
 };
 
@@ -120,7 +136,7 @@ export const fetchLocations = async (
  */
 export const createDebouncedFetcher = (
   fetcher: (keyword: string) => void,
-  delay: number = 400
+  delay: number = 200
 ) => {
   return debounce(fetcher, delay);
 };

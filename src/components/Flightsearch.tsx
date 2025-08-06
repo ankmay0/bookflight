@@ -10,19 +10,15 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import {
-  FlightTakeoff,
-  FlightLand,
-  CalendarToday,
-  Person,
-  Search,
-} from "@mui/icons-material";
+import { FlightTakeoff, FlightLand, CalendarToday, Person, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
 import { fetchLocations, createDebouncedFetcher } from "../utils/utils";
-
 
 const FlightSearch: React.FC = () => {
   const [tripType, setTripType] = useState("round");
@@ -32,43 +28,53 @@ const FlightSearch: React.FC = () => {
   const [returnDate, setReturnDate] = useState("");
   const [passengers, setPassengers] = useState(1);
   const [fromOptions, setFromOptions] = useState<any[]>([]);
-  const [fromInputValue, setFromInputValue] = useState("");
   const [toOptions, setToOptions] = useState<any[]>([]);
+  const [fromInputValue, setFromInputValue] = useState("");
   const [toInputValue, setToInputValue] = useState("");
-
+  const [isFromLoading, setIsFromLoading] = useState(false);
+  const [isToLoading, setIsToLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
   const debouncedFromFetch = useMemo(
-    () => createDebouncedFetcher((keyword) => fetchLocations(keyword, setFromOptions)),
+    () =>
+      createDebouncedFetcher((keyword) => {
+        console.log("Debounced fetch for 'From':", keyword);
+        fetchLocations(keyword, setFromOptions, setIsFromLoading, setError);
+      }, 200),
     []
   );
 
   const debouncedToFetch = useMemo(
-    () => createDebouncedFetcher((keyword) => fetchLocations(keyword, setToOptions)),
+    () =>
+      createDebouncedFetcher((keyword) => {
+        console.log("Debounced fetch for 'To':", keyword);
+        fetchLocations(keyword, setToOptions, setIsToLoading, setError);
+      }, 200),
     []
   );
 
   useEffect(() => {
-    console.log("Options:", fromOptions);
-  }, [fromOptions]);
+    console.log("From Options:", JSON.stringify(fromOptions, null, 2));
+    console.log("To Options:", JSON.stringify(toOptions, null, 2));
+  }, [fromOptions, toOptions]);
 
   const validateInputs = () => {
     if (!from || !to) {
-      alert("Please select both 'From' and 'To' locations.");
+      setError("Please select both 'From' and 'To' locations.");
       return false;
     }
     if (!departDate) {
-      alert("Please select a departure date.");
+      setError("Please select a departure date.");
       return false;
     }
     if (tripType === "round" && !returnDate) {
-      alert("Please select a return date for round trips.");
+      setError("Please select a return date for round trips.");
       return false;
     }
     return true;
   };
-
 
   return (
     <Box
@@ -85,7 +91,6 @@ const FlightSearch: React.FC = () => {
         alignItems: "center",
       }}
     >
-      {/* Header */}
       <Box textAlign="center" sx={{ mb: { xs: 3, md: 5 } }}>
         <Typography
           variant="h3"
@@ -112,7 +117,6 @@ const FlightSearch: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* White Container */}
       <Box
         sx={{
           bgcolor: "#fff",
@@ -123,7 +127,6 @@ const FlightSearch: React.FC = () => {
           boxShadow: 6,
         }}
       >
-        {/* Radio Buttons */}
         <RadioGroup
           row
           value={tripType}
@@ -154,10 +157,8 @@ const FlightSearch: React.FC = () => {
           />
         </RadioGroup>
 
-        {/* Form Fields */}
         <Grid container spacing={2}>
           <Grid container spacing={2}>
-            {/* From */}
             <Grid item xs={12} sm={6} md={2.4}>
               <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
                 From
@@ -165,54 +166,57 @@ const FlightSearch: React.FC = () => {
               <Autocomplete
                 freeSolo
                 options={fromOptions}
-                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
                 inputValue={fromInputValue}
                 onInputChange={(event, newInputValue) => {
                   setFromInputValue(newInputValue);
                   debouncedFromFetch(newInputValue);
                 }}
                 onChange={(event, value) => {
-                  if (value && typeof value !== 'string') {
+                  if (value && typeof value !== "string") {
                     setFrom(value.value);
                     setFromInputValue(value.displayText || value.label);
                   }
                 }}
-                open={fromOptions.length > 0}
-                onClose={() => setFromOptions([])}
                 filterOptions={(options) => options}
-                renderOption={(props, option) => (
-                  <li
-                    {...props}
-                    style={{
-                      padding: "10px 16px",
-                      paddingLeft: option.isChild ? "40px" : "16px",
-                      fontWeight: option.isParent ? 600 : 400,
-                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                      borderBottom: "1px solid #eee",
-                      cursor: option.isParent ? "default" : "pointer",
-                      pointerEvents: option.isParent ? "none" : "auto",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: option.isParent ? 600 : 400,
-                          color: "text.primary"
-                        }}
-                      >
-                        {option.label}
-                      </Typography>
-                      {option.isChild && option.distance && (
-                        <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                          {option.distance} from city center
+                loading={isFromLoading}
+                noOptionsText="No locations found"
+                renderOption={(props, option) => {
+                  console.log("Rendering From option:", JSON.stringify(option, null, 2));
+                  return (
+                    <li
+                      {...props}
+                      style={{
+                        padding: "10px 16px",
+                        paddingLeft: option.isChild ? "40px" : "16px",
+                        fontWeight: option.isParent ? 600 : 400,
+                        backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                        borderBottom: "1px solid #eee",
+                        cursor: option.isParent ? "default" : "pointer",
+                        pointerEvents: option.isParent ? "none" : "auto",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: option.isParent ? 600 : 400,
+                            color: "text.primary",
+                          }}
+                        >
+                          {option.label}
                         </Typography>
-                      )}
-                    </Box>
-                  </li>
-                )}
+                        {option.isChild && option.distance && (
+                          <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                            {option.distance} from city center
+                          </Typography>
+                        )}
+                      </Box>
+                    </li>
+                  );
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -224,13 +228,18 @@ const FlightSearch: React.FC = () => {
                           <FlightTakeoff />
                         </InputAdornment>
                       ),
+                      endAdornment: (
+                        <>
+                          {isFromLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
                     }}
                   />
                 )}
               />
             </Grid>
 
-            {/* To */}
             <Grid item xs={12} sm={6} md={2.4}>
               <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
                 To
@@ -238,54 +247,57 @@ const FlightSearch: React.FC = () => {
               <Autocomplete
                 freeSolo
                 options={toOptions}
-                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
                 inputValue={toInputValue}
                 onInputChange={(event, newInputValue) => {
                   setToInputValue(newInputValue);
                   debouncedToFetch(newInputValue);
                 }}
                 onChange={(event, value) => {
-                  if (value && typeof value !== 'string') {
+                  if (value && typeof value !== "string") {
                     setTo(value.value);
                     setToInputValue(value.displayText || value.label);
                   }
                 }}
-                open={toOptions.length > 0}
-                onClose={() => setToOptions([])}
                 filterOptions={(options) => options}
-                renderOption={(props, option) => (
-                  <li
-                    {...props}
-                    style={{
-                      padding: "10px 16px",
-                      paddingLeft: option.isChild ? "40px" : "16px",
-                      fontWeight: option.isParent ? 600 : 400,
-                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                      borderBottom: "1px solid #eee",
-                      cursor: option.isParent ? "default" : "pointer",
-                      pointerEvents: option.isParent ? "none" : "auto",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: option.isParent ? 600 : 400,
-                          color: "text.primary"
-                        }}
-                      >
-                        {option.label}
-                      </Typography>
-                      {option.isChild && option.distance && (
-                        <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                          {option.distance} from city center
+                loading={isToLoading}
+                noOptionsText="No locations found"
+                renderOption={(props, option) => {
+                  console.log("Rendering To option:", JSON.stringify(option, null, 2));
+                  return (
+                    <li
+                      {...props}
+                      style={{
+                        padding: "10px 16px",
+                        paddingLeft: option.isChild ? "40px" : "16px",
+                        fontWeight: option.isParent ? 600 : 400,
+                        backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                        borderBottom: "1px solid #eee",
+                        cursor: option.isParent ? "default" : "pointer",
+                        pointerEvents: option.isParent ? "none" : "auto",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: option.isParent ? 600 : 400,
+                            color: "text.primary",
+                          }}
+                        >
+                          {option.label}
                         </Typography>
-                      )}
-                    </Box>
-                  </li>
-                )}
+                        {option.isChild && option.distance && (
+                          <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
+                            {option.distance} from city center
+                          </Typography>
+                        )}
+                      </Box>
+                    </li>
+                  );
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -297,13 +309,18 @@ const FlightSearch: React.FC = () => {
                           <FlightLand />
                         </InputAdornment>
                       ),
+                      endAdornment: (
+                        <>
+                          {isToLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
                     }}
                   />
                 )}
               />
             </Grid>
 
-            {/* Departure */}
             <Grid item xs={12} sm={6} md={2.4}>
               <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
                 Departure
@@ -324,7 +341,6 @@ const FlightSearch: React.FC = () => {
               />
             </Grid>
 
-            {/* Return */}
             <Grid item xs={12} sm={6} md={2.4}>
               <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
                 Return
@@ -345,7 +361,6 @@ const FlightSearch: React.FC = () => {
               />
             </Grid>
 
-            {/* Passengers */}
             <Grid item xs={12} sm={6} md={2.4}>
               <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
                 Passengers
@@ -371,7 +386,6 @@ const FlightSearch: React.FC = () => {
             </Grid>
           </Grid>
 
-
           <Grid item xs={12} sx={{ mt: { xs: 2, md: 3 } }}>
             <Button
               variant="contained"
@@ -379,7 +393,6 @@ const FlightSearch: React.FC = () => {
               startIcon={<Search />}
               onClick={() => {
                 if (!validateInputs()) return;
-
                 navigate("/results", {
                   state: {
                     tripType,
@@ -405,10 +418,18 @@ const FlightSearch: React.FC = () => {
             >
               Search Flights
             </Button>
-
           </Grid>
         </Grid>
       </Box>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+      >
+        <Alert severity="error" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
