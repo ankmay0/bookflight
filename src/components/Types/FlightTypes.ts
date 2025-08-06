@@ -32,14 +32,16 @@ export interface Flight {
     pricingAdditionalInfo?: string;
 }
 
-export interface LocationState {
-    tripType?: string;
-    from?: string;
-    to?: string;
-    departDate?: string;
-    returnDate?: string;
-    passengers?: number;
-}
+export type LocationState = {
+  from: string;
+  to: string;
+  departDate: string;
+  passengers: number;
+  returnDate?: string;
+  adults: number;
+  children: number;
+};
+
 
 
 export interface SidebarFiltersProps {

@@ -23,6 +23,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SidebarFilters from "./SidebarFilters";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Flight, LocationState } from "../Types/FlightTypes";
+import Lottie from "lottie-react";
 
 const FlightSearchResults: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -38,12 +39,14 @@ const FlightSearchResults: React.FC = () => {
   const [availableAirlines, setAvailableAirlines] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
+  const [lottieJson, setLottieJson] = useState<any>(null);
 
   const isMobile = useMediaQuery("(max-width:600px)");
   const location = useLocation();
   const navigate = useNavigate();
   const state = (location.state as LocationState) || {};
-  const { from, to, departDate, passengers } = state;
+  // Update below line to fetch correct passengers:
+  const { from, to, departDate, returnDate, adults, children } = state;
 
   const mapStopsToLabel = (stops: number | undefined) => {
     if (stops === 0) return "Nonstop";
@@ -53,9 +56,23 @@ const FlightSearchResults: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!from || !to || !departDate || !passengers) return;
+    // fetch the lottie json just once
+    fetch("/animation.json")
+      .then(resp => resp.json())
+      .then(setLottieJson)
+      .catch(console.error);
+  }, []);
 
-    const url = `http://localhost:8080/flights/search?originLocationCode=${from}&destinationLocationCode=${to}&departureDate=${departDate}&adults=${passengers}&currencyCode=INR`;
+  useEffect(() => {
+    if (!from || !to || !departDate || (!adults && !children)) return;
+
+    // ---- CRUCIAL: Build API with both adults and children
+    const adt = adults || 0;
+    const chd = children || 0;
+    let url = `http://localhost:8080/flights/search?originLocationCode=${from}&destinationLocationCode=${to}&departureDate=${departDate}&currencyCode=INR`;
+    if (adt) url += `&adults=${adt}`;
+    if (chd) url += `&children=${chd}`;
+    if (returnDate) url += `&returnDate=${returnDate}`;
 
     setLoading(true);
     fetch(url)
@@ -101,7 +118,7 @@ const FlightSearchResults: React.FC = () => {
         setFilteredFlights([]);
         setLoading(false);
       });
-  }, [from, to, departDate, passengers]);
+  }, [from, to, departDate, returnDate, adults, children]);
 
   useEffect(() => {
     let updated = flights.filter((flight) => {
@@ -183,7 +200,16 @@ const FlightSearchResults: React.FC = () => {
         )}
         <Grid item xs={12} md={showFilters ? 9 : 12}>
           {loading ? (
-            <CircularProgress />
+            lottieJson ? (
+              <Lottie
+                animationData={lottieJson}
+                style={{ height: 200, width: 200, margin: "0 auto" }}
+                loop
+                autoplay
+              />
+            ) : (
+              <CircularProgress />
+            )
           ) : filteredFlights.length === 0 ? (
             <Typography>No flights found.</Typography>
           ) : (
@@ -212,7 +238,7 @@ const FlightSearchResults: React.FC = () => {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => navigate("/passenger-details", { state: { flight, passengers } })}
+                        onClick={() => navigate("/passenger-details", { state: { flight, passengers: (adults || 0) + (children || 0) } })}
                       >
                         Select
                       </Button>
