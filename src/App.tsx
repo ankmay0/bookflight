@@ -7,6 +7,7 @@ import FlightSearchResults from "./components/FlightSearchResults/FlightSearchRe
 import PassengerDetails from "./components/flightDetailAndPassengerDetails/PassengerDetails"; 
 import ReviewConfirmation from "./components/ReviewConfirmation";
 import BookingSuccess from "./components/BookingSuccess";
+import ManageReservation from "./components/ManageReservation";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/passenger-details" element={<PassengerDetails />} /> 
         <Route path="/review-confirmation" element={<ReviewConfirmation />} />
         <Route path="/booking-success" element={<BookingSuccess />} />
+        <Route path="/manage-reservation" element={<ManageReservation />} />
       </Routes>
       <Footer />
     </Router>
