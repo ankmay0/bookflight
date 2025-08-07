@@ -22,6 +22,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import { fetchLocations, createDebouncedFetcher } from "../utils/utils";
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
+import SearchHeaderTags from "../SearchHeaderTags";
 
 const FlightSearch: React.FC = () => {
   const [tripType, setTripType] = useState("round");
@@ -143,6 +144,11 @@ const FlightSearch: React.FC = () => {
         alignItems: "center",
       }}
     >
+      <SearchHeaderTags
+        currency="INR"
+        countryFlag="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"
+      />
+
       <Box
         sx={{
           bgcolor: "#fff",
@@ -551,31 +557,31 @@ const FlightSearch: React.FC = () => {
               </Popover>
             </Box>
 
-            
+
           </Grid>
-                <Grid item xs={4} sm={6} md={2}>
-              <Button
-                variant="contained"
-                startIcon={<Search />}
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                fullWidth
-                sx={{
-                  mt: { xs: 0, sm: 3.5 },
-                  bgcolor: "#2c39e8",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                  height: "56px",
-                  borderRadius: "14px",
-                  ":hover": {
-                    bgcolor: "#1f2ac4",
-                  },
-                }}
-              >
-                Search
-              </Button>
-            </Grid>
+          <Grid item xs={4} sm={6} md={2}>
+            <Button
+              variant="contained"
+              startIcon={<Search />}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              fullWidth
+              sx={{
+                mt: { xs: 0, sm: 3.5 },
+                bgcolor: "#2c39e8",
+                color: "#fff",
+                fontWeight: "bold",
+                fontSize: "16px",
+                height: "56px",
+                borderRadius: "14px",
+                ":hover": {
+                  bgcolor: "#1f2ac4",
+                },
+              }}
+            >
+              Search
+            </Button>
+          </Grid>
         </Grid>
       </Box>
       <Snackbar
