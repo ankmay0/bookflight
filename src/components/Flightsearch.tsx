@@ -129,464 +129,438 @@ const FlightSearch: React.FC = () => {
   const maxChildren = 6;
 
   return (
+    <Box
+      sx={{
+        backgroundImage: "url('/flightsearch-1.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        minHeight: "5vh",
+        px: { xs: 1, md: 2 },
+        pt: { xs: 2, md: 3 },
+        pb: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <Box
         sx={{
-          backgroundImage: "url('/flightsearch-1.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: "100vh",
-          px: { xs: 2, md: 6 },
-          pt: { xs: 6, md: 10 },
-          pb: { xs: 6, md: 10 },
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          bgcolor: "#fff",
+          borderRadius: "30px",
+          width: "100%",
+          maxWidth: "1400px",
+          p: { xs: 3, sm: 4, md: 5 },
+          boxShadow: 6,
         }}
       >
-        <Box textAlign="center" sx={{ mb: { xs: 3, md: 5 } }}>
-          <Typography
-            variant="h3"
-            fontWeight={700}
-            sx={{
-              fontSize: { xs: "28px", sm: "36px", md: "64px" },
-              mb: 1,
-              color: "#fff",
-              textShadow: "0 1px 6px rgba(0,0,0,0.3)",
-            }}
-          >
-            Find Your Perfect Flight
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: { xs: "14px", md: "18px" },
-              color: "#fff",
-              textShadow: "0 1px 4px rgba(0,0,0,0.4)",
-            }}
-          >
-            Book flights, hotels, and complete travel packages at the best prices.
-            Your journey starts here.
-          </Typography>
-        </Box>
-
+        {/* Inline group: radios and cabin dropdown */}
         <Box
           sx={{
-            bgcolor: "#fff",
-            borderRadius: "30px",
-            width: "100%",
-            maxWidth: "1200px",
-            p: { xs: 3, sm: 4, md: 5 },
-            boxShadow: 6,
+            display: "flex",
+            alignItems: "center",
+            mb: 4,
+            gap: 2,
           }}
         >
-          {/* Inline group: radios and cabin dropdown */}
-          <Box
+          <RadioGroup
+            row
+            value={tripType}
+            onChange={(e) => setTripType(e.target.value)}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              mb: 4,
-              gap: 2,
+              flexWrap: "wrap",
+              "& .MuiFormControlLabel-root": {
+                mr: 4,
+                fontWeight: "bold",
+              },
             }}
           >
-            <RadioGroup
-              row
-              value={tripType}
-              onChange={(e) => setTripType(e.target.value)}
-              sx={{
-                flexWrap: "wrap",
-                "& .MuiFormControlLabel-root": {
-                  mr: 4,
-                  fontWeight: "bold",
-                },
-              }}
-            >
-              <FormControlLabel
-                value="round"
-                control={<Radio color="primary" />}
-                label="Round Trip"
-              />
-              <FormControlLabel
-                value="oneway"
-                control={<Radio color="primary" />}
-                label="One Way"
-              />
-              <FormControlLabel
-                value="multi"
-                control={<Radio color="primary" />}
-                label="Multi City"
-              />
-            </RadioGroup>
-            <Select
-              value={cabinClass}
-              onChange={(e) => setCabinClass(e.target.value)}
-              displayEmpty
-              fullWidth={false}
-              sx={{
-                minWidth: 180,
+            <FormControlLabel
+              value="round"
+              control={<Radio color="primary" />}
+              label="Round Trip"
+            />
+            <FormControlLabel
+              value="oneway"
+              control={<Radio color="primary" />}
+              label="One Way"
+            />
+            <FormControlLabel
+              value="multi"
+              control={<Radio color="primary" />}
+              label="Multi City"
+            />
+          </RadioGroup>
+          <Select
+            value={cabinClass}
+            onChange={(e) => setCabinClass(e.target.value)}
+            displayEmpty
+            fullWidth={false}
+            sx={{
+              minWidth: 180,
+              borderRadius: "30px",
+              ".MuiOutlinedInput-notchedOutline": {
                 borderRadius: "30px",
-                ".MuiOutlinedInput-notchedOutline": {
-                  borderRadius: "30px",
-                },
-                height: "40px",
-                ml: 1,
-                fontWeight: 500,
+              },
+              height: "40px",
+              ml: 1,
+              fontWeight: 500,
+            }}
+          >
+            <MenuItem value="ECONOMY">Economy</MenuItem>
+            <MenuItem value="PREMIUM_ECONOMY">Premium Economy</MenuItem>
+            <MenuItem value="BUSINESS">Business Class</MenuItem>
+            <MenuItem value="FIRST">First Class</MenuItem>
+          </Select>
+        </Box>
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+              From
+            </Typography>
+            <Autocomplete
+              freeSolo
+              options={fromOptions}
+              getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
+              inputValue={fromInputValue}
+              onInputChange={(event, newInputValue) => {
+                setFromInputValue(newInputValue);
+                debouncedFromFetch(newInputValue);
+              }}
+              onChange={(event, value) => {
+                if (value && typeof value !== "string") {
+                  setFrom(value.value);
+                  setFromInputValue(value.label); // Use label to include distance
+                }
+              }}
+              filterOptions={(options) => options}
+              loading={isFromLoading}
+              noOptionsText="No locations found"
+              renderOption={(props, option) => (
+                <li
+                  {...props}
+                  style={{
+                    padding: "10px 16px",
+                    paddingLeft: option.isChild ? "40px" : "16px",
+                    fontWeight: option.isParent ? 600 : 400,
+                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                    borderBottom: "1px solid #eee",
+                    cursor: option.isParent ? "default" : "pointer",
+                    pointerEvents: option.isParent ? "none" : "auto",
+                    display: "flex",
+                    flexDirection: "column", // Stack vertically
+                    alignItems: "flex-start", // Align to start
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: option.isParent ? 600 : 400,
+                      color: "text.primary",
+                    }}
+                  >
+                    {option.label}
+                  </Typography>
+                  {option.distance && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.3,
+                      }}
+                    >
+                      {option.distance} from city center
+                    </Typography>
+                  )}
+                </li>
+              )}
+
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="New York (NYC)"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FlightTakeoff />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <>
+                        {isFromLoading ? <></> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                    sx: { borderRadius: "14px" },
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+              To
+            </Typography>
+            <Autocomplete
+              freeSolo
+              options={toOptions}
+              getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
+              inputValue={toInputValue}
+              onInputChange={(event, newInputValue) => {
+                setToInputValue(newInputValue);
+                debouncedToFetch(newInputValue);
+              }}
+              onChange={(event, value) => {
+                if (value && typeof value !== "string") {
+                  setTo(value.value);
+                  setToInputValue(value.label); // Use label to include distance
+                }
+              }}
+              filterOptions={(options) => options}
+              loading={isToLoading}
+              noOptionsText="No locations found"
+              renderOption={(props, option) => (
+                <li
+                  {...props}
+                  style={{
+                    padding: "10px 16px",
+                    paddingLeft: option.isChild ? "40px" : "16px",
+                    fontWeight: option.isParent ? 600 : 400,
+                    backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
+                    borderBottom: "1px solid #eee",
+                    cursor: option.isParent ? "default" : "pointer",
+                    pointerEvents: option.isParent ? "none" : "auto",
+                    display: "flex",
+                    flexDirection: "column", // Stack vertically
+                    alignItems: "flex-start", // Align to start
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: option.isParent ? 600 : 400,
+                      color: "text.primary",
+                    }}
+                  >
+                    {option.label}
+                  </Typography>
+                  {option.distance && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.3,
+                      }}
+                    >
+                      {option.distance} from city center
+                    </Typography>
+                  )}
+                </li>
+              )}
+
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Los Angeles (LAX)"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <FlightLand />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <>
+                        {isToLoading ? <></> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                    sx: { borderRadius: "14px" },
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={12} md={2}>
+            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+              Dates
+            </Typography>
+            <DatePicker.RangePicker
+              placeholder={['Departure', tripType === 'round' ? 'Return' : 'Till Now']}
+              allowEmpty={[false, tripType === 'round' ? false : true]}
+              value={[departDate ? dayjs(departDate) : null, returnDate ? dayjs(returnDate) : null]}
+              onChange={(date, dateString) => {
+                setDepartDate(dateString[0]);
+                setReturnDate(dateString[1]);
+              }}
+              format="YYYY-MM-DD"
+              style={{
+                width: '100%',
+                height: '56px',
+                borderRadius: '14px'
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
+              Passengers
+            </Typography>
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: "100%",
+                position: "relative",
               }}
             >
-              <MenuItem value="ECONOMY">Economy</MenuItem>
-              <MenuItem value="PREMIUM_ECONOMY">Premium Economy</MenuItem>
-              <MenuItem value="BUSINESS">Business Class</MenuItem>
-              <MenuItem value="FIRST">First Class</MenuItem>
-            </Select>
-          </Box>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-                From
-              </Typography>
-              <Autocomplete
-                freeSolo
-                options={fromOptions}
-                getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
-                inputValue={fromInputValue}
-                onInputChange={(event, newInputValue) => {
-                  setFromInputValue(newInputValue);
-                  debouncedFromFetch(newInputValue);
-                }}
-                onChange={(event, value) => {
-                  if (value && typeof value !== "string") {
-                    setFrom(value.value);
-                    setFromInputValue(value.label); // Use label to include distance
-                  }
-                }}
-                filterOptions={(options) => options}
-                loading={isFromLoading}
-                noOptionsText="No locations found"
-                renderOption={(props, option) => (
-                  <li
-                    {...props}
-                    style={{
-                      padding: "10px 16px",
-                      paddingLeft: option.isChild ? "40px" : "16px",
-                      fontWeight: option.isParent ? 600 : 400,
-                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                      borderBottom: "1px solid #eee",
-                      cursor: option.isParent ? "default" : "pointer",
-                      pointerEvents: option.isParent ? "none" : "auto",
-                      display: "flex",
-                      flexDirection: "column", // Stack vertically
-                      alignItems: "flex-start", // Align to start
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary",
-                      }}
-                    >
-                      {option.label}
-                    </Typography>
-                    {option.distance && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                          mt: 0.3,
-                        }}
-                      >
-                        {option.distance} from city center
-                      </Typography>
-                    )}
-                  </li>
-                )}
-
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="New York (NYC)"
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FlightTakeoff />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <>
-                          {isFromLoading ? <></> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
-                      sx: { borderRadius: "14px" },
-                    }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-                To
-              </Typography>
-              <Autocomplete
-                freeSolo
-                options={toOptions}
-                getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
-                inputValue={toInputValue}
-                onInputChange={(event, newInputValue) => {
-                  setToInputValue(newInputValue);
-                  debouncedToFetch(newInputValue);
-                }}
-                onChange={(event, value) => {
-                  if (value && typeof value !== "string") {
-                    setTo(value.value);
-                    setToInputValue(value.label); // Use label to include distance
-                  }
-                }}
-                filterOptions={(options) => options}
-                loading={isToLoading}
-                noOptionsText="No locations found"
-                renderOption={(props, option) => (
-                  <li
-                    {...props}
-                    style={{
-                      padding: "10px 16px",
-                      paddingLeft: option.isChild ? "40px" : "16px",
-                      fontWeight: option.isParent ? 600 : 400,
-                      backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
-                      borderBottom: "1px solid #eee",
-                      cursor: option.isParent ? "default" : "pointer",
-                      pointerEvents: option.isParent ? "none" : "auto",
-                      display: "flex",
-                      flexDirection: "column", // Stack vertically
-                      alignItems: "flex-start", // Align to start
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: option.isParent ? 600 : 400,
-                        color: "text.primary",
-                      }}
-                    >
-                      {option.label}
-                    </Typography>
-                    {option.distance && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                          mt: 0.3,
-                        }}
-                      >
-                        {option.distance} from city center
-                      </Typography>
-                    )}
-                  </li>
-                )}
-
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Los Angeles (LAX)"
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FlightLand />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <>
-                          {isToLoading ? <></> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
-                      sx: { borderRadius: "14px" },
-                    }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: "14px" } }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={12} md={2}>
-              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-                Dates
-              </Typography>
-              <DatePicker.RangePicker
-                placeholder={['Departure', tripType === 'round' ? 'Return' : 'Till Now']}
-                allowEmpty={[false, tripType === 'round' ? false : true]}
-                value={[departDate ? dayjs(departDate) : null, returnDate ? dayjs(returnDate) : null]}
-                onChange={(date, dateString) => {
-                  setDepartDate(dateString[0]);
-                  setReturnDate(dateString[1]);
-                }}
-                format="YYYY-MM-DD"
-                style={{
-                  width: '100%',
-                  height: '56px',
-                  borderRadius: '14px'
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
-                Passengers
-              </Typography>
-              <Box
+              <Button
+                variant="outlined"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{
+                  height: 56,
+                  borderRadius: "14px",
                   width: "100%",
-                  maxWidth: "100%",
-                  position: "relative",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  background: "#fafcff",
+                  border: "1px solid #e0e0e0",
+                  color: "#333",
+                  fontWeight: 500,
+                  textTransform: "none",
+                }}
+                endIcon={<ExpandMore />}
+              >
+                {adults + children} Passengers
+              </Button>
+              <Popover
+                open={Boolean(anchorEl)}
+                anchorEl={anchorEl}
+                onClose={() => setAnchorEl(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                PaperProps={{
+                  sx: {
+                    p: 2,
+                    borderRadius: "14px",
+                    minWidth: 250,
+                    boxShadow: 6,
+                  }
                 }}
               >
-                <Button
-                  variant="outlined"
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  sx={{
-                    height: 56,
-                    borderRadius: "14px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    background: "#fafcff",
-                    border: "1px solid #e0e0e0",
-                    color: "#333",
-                    fontWeight: 500,
-                    textTransform: "none",
-                  }}
-                  endIcon={<ExpandMore />}
-                >
-                  {adults + children} Passengers
-                </Button>
-                <Popover
-                  open={Boolean(anchorEl)}
-                  anchorEl={anchorEl}
-                  onClose={() => setAnchorEl(null)}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                  PaperProps={{
-                    sx: {
-                      p: 2,
-                      borderRadius: "14px",
-                      minWidth: 250,
-                      boxShadow: 6,
-                    }
-                  }}
-                >
-                  {/* Adult Controls */}
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <Person fontSize="small" />
-                    <Typography variant="subtitle2" sx={{ ml: 1, minWidth: 42 }}>Adult</Typography>
-                    <Typography variant="caption" sx={{ color: "#888", ml: 1 }}>
-                      (12+)
-                    </Typography>
-                    <IconButton
-                      aria-label="remove adult"
-                      size="small"
-                      disabled={adults <= minAdults}
-                      onClick={() => setAdults((count) => Math.max(minAdults, count - 1))}
-                      sx={{
-                        mx: 1.5,
-                        borderRadius: "50%",
-                        bgcolor: "#f5f5f5",
-                        color: "#7686ca",
-                        border: "1px solid #e0e0e0",
-                        transition: "all 0.1s",
-                        width: 30,
-                        height: 30,
-                        "&:hover": { bgcolor: "#f4f4fd" },
-                      }}
-                    >
-                      <Remove fontSize="small" />
-                    </IconButton>
-                    <Typography component="span" sx={{ mx: 0.5, minWidth: 22, textAlign: "center", fontWeight: 600 }}>
-                      {adults}
-                    </Typography>
-                    <IconButton
-                      aria-label="add adult"
-                      size="small"
-                      disabled={adults >= maxAdults}
-                      onClick={() => setAdults((count) => Math.min(maxAdults, count + 1))}
-                      sx={{
-                        mx: 0.5,
-                        borderRadius: "50%",
-                        bgcolor: "#e3ebfa",
-                        color: "#2857ec",
-                        border: "1px solid #b2c1ec",
-                        transition: "all 0.1s",
-                        width: 30,
-                        height: 30,
-                        "&:hover": { bgcolor: "#dbe9fa" },
-                      }}
-                    >
-                      <Add fontSize="small" />
-                    </IconButton>
-                  </Box>
-                  {/* Child Controls */}
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <ChildCare fontSize="small" sx={{ ml: 0 }} />
-                    <Typography variant="subtitle2" sx={{ ml: 1, minWidth: 40 }}>Child</Typography>
-                    <Typography variant="caption" sx={{ color: "#888", ml: 1 }}>
-                      (2-11)
-                    </Typography>
-                    <IconButton
-                      aria-label="remove child"
-                      size="small"
-                      disabled={children <= minChildren}
-                      onClick={() => setChildren((count) => Math.max(minChildren, count - 1))}
-                      sx={{
-                        mx: 1.5,
-                        borderRadius: "50%",
-                        bgcolor: "#f5f5f5",
-                        color: "#7686ca",
-                        border: "1px solid #e0e0e0",
-                        transition: "all 0.1s",
-                        width: 30,
-                        height: 30,
-                        "&:hover": { bgcolor: "#f4f4fd" },
-                      }}
-                    >
-                      <Remove fontSize="small" />
-                    </IconButton>
-                    <Typography component="span" sx={{ mx: 0.5, minWidth: 22, textAlign: "center", fontWeight: 600 }}>
-                      {children}
-                    </Typography>
-                    <IconButton
-                      aria-label="add child"
-                      size="small"
-                      disabled={children >= maxChildren}
-                      onClick={() => setChildren((count) => Math.min(maxChildren, count + 1))}
-                      sx={{
-                        mx: 0.5,
-                        borderRadius: "50%",
-                        bgcolor: "#e3ebfa",
-                        color: "#2857ec",
-                        border: "1px solid #b2c1ec",
-                        transition: "all 0.1s",
-                        width: 30,
-                        height: 30,
-                        "&:hover": { bgcolor: "#dbe9fa" },
-                      }}
-                    >
-                      <Add fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </Popover>
-              </Box>
-            </Grid>
+                {/* Adult Controls */}
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Person fontSize="small" />
+                  <Typography variant="subtitle2" sx={{ ml: 1, minWidth: 42 }}>Adult</Typography>
+                  <Typography variant="caption" sx={{ color: "#888", ml: 1 }}>
+                    (12+)
+                  </Typography>
+                  <IconButton
+                    aria-label="remove adult"
+                    size="small"
+                    disabled={adults <= minAdults}
+                    onClick={() => setAdults((count) => Math.max(minAdults, count - 1))}
+                    sx={{
+                      mx: 1.5,
+                      borderRadius: "50%",
+                      bgcolor: "#f5f5f5",
+                      color: "#7686ca",
+                      border: "1px solid #e0e0e0",
+                      transition: "all 0.1s",
+                      width: 30,
+                      height: 30,
+                      "&:hover": { bgcolor: "#f4f4fd" },
+                    }}
+                  >
+                    <Remove fontSize="small" />
+                  </IconButton>
+                  <Typography component="span" sx={{ mx: 0.5, minWidth: 22, textAlign: "center", fontWeight: 600 }}>
+                    {adults}
+                  </Typography>
+                  <IconButton
+                    aria-label="add adult"
+                    size="small"
+                    disabled={adults >= maxAdults}
+                    onClick={() => setAdults((count) => Math.min(maxAdults, count + 1))}
+                    sx={{
+                      mx: 0.5,
+                      borderRadius: "50%",
+                      bgcolor: "#e3ebfa",
+                      color: "#2857ec",
+                      border: "1px solid #b2c1ec",
+                      transition: "all 0.1s",
+                      width: 30,
+                      height: 30,
+                      "&:hover": { bgcolor: "#dbe9fa" },
+                    }}
+                  >
+                    <Add fontSize="small" />
+                  </IconButton>
+                </Box>
+                {/* Child Controls */}
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <ChildCare fontSize="small" sx={{ ml: 0 }} />
+                  <Typography variant="subtitle2" sx={{ ml: 1, minWidth: 40 }}>Child</Typography>
+                  <Typography variant="caption" sx={{ color: "#888", ml: 1 }}>
+                    (2-11)
+                  </Typography>
+                  <IconButton
+                    aria-label="remove child"
+                    size="small"
+                    disabled={children <= minChildren}
+                    onClick={() => setChildren((count) => Math.max(minChildren, count - 1))}
+                    sx={{
+                      mx: 1.5,
+                      borderRadius: "50%",
+                      bgcolor: "#f5f5f5",
+                      color: "#7686ca",
+                      border: "1px solid #e0e0e0",
+                      transition: "all 0.1s",
+                      width: 30,
+                      height: 30,
+                      "&:hover": { bgcolor: "#f4f4fd" },
+                    }}
+                  >
+                    <Remove fontSize="small" />
+                  </IconButton>
+                  <Typography component="span" sx={{ mx: 0.5, minWidth: 22, textAlign: "center", fontWeight: 600 }}>
+                    {children}
+                  </Typography>
+                  <IconButton
+                    aria-label="add child"
+                    size="small"
+                    disabled={children >= maxChildren}
+                    onClick={() => setChildren((count) => Math.min(maxChildren, count + 1))}
+                    sx={{
+                      mx: 0.5,
+                      borderRadius: "50%",
+                      bgcolor: "#e3ebfa",
+                      color: "#2857ec",
+                      border: "1px solid #b2c1ec",
+                      transition: "all 0.1s",
+                      width: 30,
+                      height: 30,
+                      "&:hover": { bgcolor: "#dbe9fa" },
+                    }}
+                  >
+                    <Add fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Popover>
+            </Box>
 
-            <Grid item xs={12} sx={{ mt: { xs: 2, md: 3 } }}>
+            <Grid item xs={4}>
               <Button
                 variant="contained"
-                fullWidth
                 startIcon={<Search />}
                 onClick={handleSubmit}
                 disabled={isSubmitting}
+                fullWidth
                 sx={{
+                  mt: 3,
                   bgcolor: "#2c39e8",
                   color: "#fff",
                   fontWeight: "bold",
@@ -598,22 +572,23 @@ const FlightSearch: React.FC = () => {
                   },
                 }}
               >
-                Search Flights
+                Search
               </Button>
             </Grid>
-
           </Grid>
-        </Box>
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={() => setError(null)}
-        >
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        </Snackbar>
+
+        </Grid>
       </Box>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+      >
+        <Alert severity="error" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 
