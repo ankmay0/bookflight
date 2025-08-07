@@ -23,6 +23,8 @@ import { fetchLocations, createDebouncedFetcher } from "../utils/utils";
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import SearchHeaderTags from "../SearchHeaderTags";
+import { Flight, LocationOn } from "@mui/icons-material";
+
 
 const FlightSearch: React.FC = () => {
   const [tripType, setTripType] = useState("round");
@@ -246,37 +248,42 @@ const FlightSearch: React.FC = () => {
                   {...props}
                   style={{
                     padding: "10px 16px",
-                    paddingLeft: option.isChild ? "40px" : "16px",
+                    paddingLeft: option.isParent ? "16px" : "32px", // <-- Added indent for children
                     fontWeight: option.isParent ? 600 : 400,
                     backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
                     borderBottom: "1px solid #eee",
                     cursor: option.isParent ? "default" : "pointer",
                     pointerEvents: option.isParent ? "none" : "auto",
                     display: "flex",
-                    flexDirection: "column", // Stack vertically
-                    alignItems: "flex-start", // Align to start
+                    alignItems: "flex-start",
+                    gap: "10px",
                   }}
                 >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: option.isParent ? 600 : 400,
-                      color: "text.primary",
-                    }}
-                  >
-                    {option.label}
-                  </Typography>
-                  {option.distance && (
+
+                  {/* Icon based on type */}
+                  {option.isParent ? (
+                    <LocationOn sx={{ color: "#999", mt: "2px" }} />
+                  ) : (
+                    <FlightTakeoff fontSize="small" style={{ color: "#43a047" }} />
+                  )}
+
+                  {/* Label & Distance */}
+                  <Box>
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       sx={{
-                        color: "text.secondary",
-                        mt: 0.3,
+                        fontWeight: option.isParent ? 600 : 400,
+                        color: "text.primary",
                       }}
                     >
-                      {option.distance} from city center
+                      {option.label}
                     </Typography>
-                  )}
+                    {option.distance && (
+                      <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.3 }}>
+                        {option.distance} from city center
+                      </Typography>
+                    )}
+                  </Box>
                 </li>
               )}
 
@@ -332,39 +339,44 @@ const FlightSearch: React.FC = () => {
                   {...props}
                   style={{
                     padding: "10px 16px",
-                    paddingLeft: option.isChild ? "40px" : "16px",
+                    paddingLeft: option.isParent ? "16px" : "32px",
                     fontWeight: option.isParent ? 600 : 400,
                     backgroundColor: option.isParent ? "#f7f7f7" : "inherit",
                     borderBottom: "1px solid #eee",
                     cursor: option.isParent ? "default" : "pointer",
                     pointerEvents: option.isParent ? "none" : "auto",
                     display: "flex",
-                    flexDirection: "column", // Stack vertically
-                    alignItems: "flex-start", // Align to start
+                    alignItems: "center",
+                    gap: "12px",
                   }}
                 >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: option.isParent ? 600 : 400,
-                      color: "text.primary",
-                    }}
-                  >
-                    {option.label}
-                  </Typography>
-                  {option.distance && (
+                  <FlightLand fontSize="small" style={{ color: "#43a047" }} />
+
+                  <Box>
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       sx={{
-                        color: "text.secondary",
-                        mt: 0.3,
+                        fontWeight: option.isParent ? 600 : 400,
+                        color: "text.primary",
                       }}
                     >
-                      {option.distance} from city center
+                      {option.label}
                     </Typography>
-                  )}
+                    {option.distance && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        {option.distance} from city center
+                      </Typography>
+                    )}
+                  </Box>
                 </li>
               )}
+
 
               renderInput={(params) => (
                 <TextField
