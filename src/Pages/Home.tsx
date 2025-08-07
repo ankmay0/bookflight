@@ -10,7 +10,7 @@ const destinations = [
   },
   {
     city: "Mumbai",
-    country: "India", 
+    country: "India",
     image: "https://images.unsplash.com/photo-1595658658481-d53d3f999875?w=800&h=600&fit=crop&auto=format",
   },
   {
@@ -49,14 +49,14 @@ const trendingDeals = [
     desc: "Non-stop, next week",
   },
   {
-    route: "Bangalore ↔ Paris", 
+    route: "Bangalore ↔ Paris",
     price: "₹40,100",
     image: "https://images.unsplash.com/photo-1583946099379-f9c9cb8bc030?w=800&h=400&fit=crop&auto=format",
     desc: "Low fare, limited seats",
   },
   {
     route: "Mumbai ↔ New York",
-    price: "₹68,200", 
+    price: "₹68,200",
     image: "https://images.unsplash.com/photo-1544588440-fc12c57ccb7e?w=800&h=400&fit=crop&auto=format",
     desc: "1-stop, best for families",
   },
@@ -70,7 +70,7 @@ const testimonials = [
     img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face&auto=format",
   },
   {
-    name: "Priya", 
+    name: "Priya",
     quote: "The deals section is awesome! I saved a lot.",
     img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
@@ -90,21 +90,21 @@ const topAirlines = [
     routes: "150+ destinations",
   },
   {
-    name: "IndiGo", 
+    name: "IndiGo",
     rating: "4.0/5",
     image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=200&h=150&fit=crop&auto=format",
     routes: "100+ destinations",
   },
   {
     name: "Emirates",
-    rating: "4.5/5", 
+    rating: "4.5/5",
     image: "https://images.unsplash.com/photo-1583946099379-f9c9cb8bc030?w=200&h=150&fit=crop&auto=format",
     routes: "140+ destinations",
   },
   {
     name: "Qatar Airways",
     rating: "4.4/5",
-    image: "https://images.unsplash.com/photo-1544588440-fc12c57ccb7e?w=200&h=150&fit=crop&auto=format", 
+    image: "https://images.unsplash.com/photo-1544588440-fc12c57ccb7e?w=200&h=150&fit=crop&auto=format",
     routes: "160+ destinations",
   },
 ];
@@ -120,7 +120,7 @@ const travelTips = [
   {
     title: "Travel Insurance",
     tip: "Always get travel insurance - it's cheaper than medical bills abroad",
-    icon: "🛡️", 
+    icon: "🛡️",
     image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=300&h=200&fit=crop&auto=format",
   },
   {
@@ -146,7 +146,7 @@ const flightClasses = [
     priceRange: "Most affordable",
   },
   {
-    class: "Premium Economy", 
+    class: "Premium Economy",
     features: ["Extra legroom", "Priority boarding", "Enhanced meals"],
     image: "https://images.unsplash.com/photo-1544899489-a083461c4cd3?w=400&h=300&fit=crop&auto=format",
     priceRange: "Mid-range comfort",
@@ -154,7 +154,7 @@ const flightClasses = [
   {
     class: "Business",
     features: ["Lie-flat seats", "Lounge access", "Premium dining"],
-    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop&auto=format", 
+    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop&auto=format",
     priceRange: "Luxury experience",
   },
 ];
@@ -171,7 +171,7 @@ const specialOffers = [
   {
     title: "Senior Citizen",
     description: "Special fares for passengers 60+ years",
-    code: "SENIOR20", 
+    code: "SENIOR20",
     image: "https://images.unsplash.com/photo-1544967882-4dcbb8489cd0?w=300&h=200&fit=crop&auto=format",
     validity: "Year-round offer",
   },
@@ -195,9 +195,11 @@ const HomePage: React.FC = () => (
         style={{
           display: "flex",
           overflowX: "auto",
-          gap: "1.2rem", 
+          gap: "1.2rem",
           padding: "0.8rem 0 0.5rem 0",
           maxWidth: "100vw",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE 10
         }}
       >
         {destinations.map((dest, idx) => (
@@ -234,7 +236,7 @@ const HomePage: React.FC = () => (
 
 
 
-   
+
 
     {/* Special Offers */}
     <section style={{ padding: "2rem 1rem", background: "#fff" }}>
@@ -246,7 +248,7 @@ const HomePage: React.FC = () => (
           gap: "1.5rem",
           justifyContent: "center",
           maxWidth: "900px",
-          margin: "0 auto"
+          margin: "0 auto",
         }}
       >
         {specialOffers.map((offer, idx) => (
@@ -311,12 +313,12 @@ const HomePage: React.FC = () => (
             <img
               src={testi.img}
               alt={testi.name}
-              style={{ 
-                width: "54px", 
-                height: "54px", 
-                borderRadius: "50%", 
-                objectFit: "cover", 
-                marginBottom: "0.7rem" 
+              style={{
+                width: "54px",
+                height: "54px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                marginBottom: "0.7rem"
               }}
               loading="lazy"
             />
@@ -327,7 +329,7 @@ const HomePage: React.FC = () => (
       </div>
     </section>
 
-    
+
     {/* Footer */}
   </main>
 );
