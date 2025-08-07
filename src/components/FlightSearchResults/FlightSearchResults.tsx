@@ -1,29 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  Button,
-  Stack,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  useMediaQuery,
-  CircularProgress,
-  Divider,
-} from "@mui/material";
+import { Box, Stack, FormControl, InputLabel, Select, MenuItem, Button, Typography, useMediaQuery, CircularProgress } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
-import FlightLandIcon from "@mui/icons-material/FlightLand";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import SidebarFilters from "./SidebarFilters";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Flight, LocationState } from "../Types/FlightTypes";
 import Lottie from "lottie-react";
+import SidebarFilters from "./SidebarFilters";
+import FlightList from "./FlightList";
 
 const FlightSearchResults: React.FC = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -40,12 +23,12 @@ const FlightSearchResults: React.FC = () => {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
   const [lottieJson, setLottieJson] = useState<any>(null);
+  const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<Flight | null>(null);
 
   const isMobile = useMediaQuery("(max-width:600px)");
   const location = useLocation();
   const navigate = useNavigate();
   const state = (location.state as LocationState) || {};
-  // Update below line to fetch correct passengers:
   const { from, to, departDate, returnDate, adults, children } = state;
 
   const mapStopsToLabel = (stops: number | undefined) => {
@@ -56,7 +39,6 @@ const FlightSearchResults: React.FC = () => {
   };
 
   useEffect(() => {
-    // fetch the lottie json just once
     fetch("/animation.json")
       .then(resp => resp.json())
       .then(setLottieJson)
@@ -66,7 +48,6 @@ const FlightSearchResults: React.FC = () => {
   useEffect(() => {
     if (!from || !to || !departDate || (!adults && !children)) return;
 
-    // ---- CRUCIAL: Build API with both adults and children
     const adt = adults || 0;
     const chd = children || 0;
     let url = `http://localhost:8080/flights/search?originLocationCode=${from}&destinationLocationCode=${to}&departureDate=${departDate}&currencyCode=INR`;
@@ -81,13 +62,7 @@ const FlightSearchResults: React.FC = () => {
         return res.json();
       })
       .then((data) => {
-        // Use the correct key here:
-        let flightsArr: Flight[] = [];
-        if (Array.isArray(data.flightsAvailable)) {
-          flightsArr = data.flightsAvailable;
-        } else {
-          flightsArr = [];
-        }
+        let flightsArr: Flight[] = Array.isArray(data.flightsAvailable) ? data.flightsAvailable : [];
         setFlights(flightsArr);
         setFilteredFlights(flightsArr);
 
@@ -158,12 +133,28 @@ const FlightSearchResults: React.FC = () => {
     setFilteredFlights(Array.isArray(updated) ? updated : []);
   }, [priceRange, selectedTimes, selectedStops, selectedAirlines, sortBy, flights]);
 
+  const handleDepartureSelect = (flight: Flight) => {
+    setSelectedDepartureFlight(flight);
+  };
+
+  const handleConfirmSelection = (returnFlight: Flight) => {
+    navigate("/passenger-details", { 
+      state: { 
+        flight: { 
+          ...selectedDepartureFlight, 
+          trips: [selectedDepartureFlight!.trips[0], returnFlight.trips[1]] 
+        }, 
+        passengers: (adults || 0) + (children || 0) 
+      }
+    });
+  };
+
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#eef2f5" }}>
       <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} mb={3} gap={2}>
         <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <AirplanemodeActiveIcon color="primary" />
-          {loading ? "Loading flights..." : `${filteredFlights.length} flights found`}
+          {loading ? "Loading flights..." : selectedDepartureFlight ? `${filteredFlights.filter(f => f.trips[1]?.from === to && f.trips[1]?.to === from).length} return flights found` : `${filteredFlights.filter(f => f.trips[0]?.from === from && f.trips[0]?.to === to).length} departure flights found`}
         </Typography>
         <Stack direction="row" spacing={2} flexWrap="wrap">
           <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -179,122 +170,31 @@ const FlightSearchResults: React.FC = () => {
           </Button>
         </Stack>
       </Box>
-      <Grid container spacing={3}>
-        {showFilters && (
-          <Grid item xs={12} md={3}>
-            <SidebarFilters
-              priceRange={priceRange}
-              setPriceRange={setPriceRange}
-              selectedTimes={selectedTimes}
-              setSelectedTimes={setSelectedTimes}
-              selectedStops={selectedStops}
-              setSelectedStops={setSelectedStops}
-              selectedAirlines={selectedAirlines}
-              setSelectedAirlines={setSelectedAirlines}
-              availableStops={availableStops}
-              availableAirlines={availableAirlines}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-            />
-          </Grid>
-        )}
-        <Grid item xs={12} md={showFilters ? 9 : 12}>
-          {loading ? (
-            lottieJson ? (
-              <Lottie
-                animationData={lottieJson}
-                style={{ height: 200, width: 200, margin: "0 auto" }}
-                loop
-                autoplay
-              />
-            ) : (
-              <CircularProgress />
-            )
-          ) : filteredFlights.length === 0 ? (
-            <Typography>No flights found.</Typography>
-          ) : (
-            <Stack spacing={3}>
-              {filteredFlights.map((flight, idx) => (
-                <Paper
-                  key={idx}
-                  elevation={4}
-                  sx={{
-                    borderRadius: 3,
-                    p: 3,
-                    backgroundColor: "#ffffff",
-                    boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                      <Typography variant="h6" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <AirplanemodeActiveIcon /> {flight.trips?.[0]?.legs?.[0]?.operatingCarrierCode || ""} {flight.trips?.[0]?.legs?.[0]?.flightNumber || ""}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {flight.trips.length > 1 ? "Multiple Trips" : "Direct"} | ₹{flight.totalPrice}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => navigate("/passenger-details", { state: { flight, passengers: (adults || 0) + (children || 0) } })}
-                      >
-                        Select
-                      </Button>
-                    </Grid>
-                  </Grid>
-                  <Divider sx={{ my: 2 }} />
-                  {flight.trips.map((trip, tIdx) => (
-                    <Box key={tIdx}>
-                      {trip.legs.map((leg, lIdx) => (
-                        <Grid container spacing={2} alignItems="center" justifyContent="space-between" key={lIdx} sx={{ mb: 1 }}>
-                          <Grid item xs={12} md={3}>
-                            <Typography>
-                              <FlightTakeoffIcon fontSize="small" sx={{ mr: 1 }} />
-                              <strong>
-                                {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </strong>{" "}
-                              ({leg.departureAirport})
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} md={3}>
-                            <Typography>
-                              <FlightLandIcon fontSize="small" sx={{ mr: 1 }} />
-                              <strong>
-                                {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </strong>{" "}
-                              ({leg.arrivalAirport})
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} md={3}>
-                            <Typography>
-                              <AccessTimeIcon fontSize="small" sx={{ mr: 1 }} />
-                              {leg.duration}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} md={3}>
-                            <Typography>
-                              <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} />
-                              Aircraft: {leg.aircraftCode}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      ))}
-                    </Box>
-                  ))}
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </Grid>
-      </Grid>
+      <FlightList
+        loading={loading}
+        lottieJson={lottieJson}
+        filteredFlights={filteredFlights}
+        selectedDepartureFlight={selectedDepartureFlight}
+        from={from}
+        to={to}
+        showFilters={showFilters}
+        handleDepartureSelect={handleDepartureSelect}
+        handleConfirmSelection={handleConfirmSelection}
+        mapStopsToLabel={mapStopsToLabel}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        selectedTimes={selectedTimes}
+        setSelectedTimes={setSelectedTimes}
+        selectedStops={selectedStops}
+        setSelectedStops={setSelectedStops}
+        selectedAirlines={selectedAirlines}
+        setSelectedAirlines={setSelectedAirlines}
+        availableStops={availableStops}
+        availableAirlines={availableAirlines}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        setSelectedDepartureFlight={setSelectedDepartureFlight}
+      />
     </Box>
   );
 };

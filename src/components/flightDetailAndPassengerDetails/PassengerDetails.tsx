@@ -15,10 +15,10 @@ const PassengerDetails: React.FC = () => {
 
   return (
     <Grid container spacing={3} p={3}>
+      <PassengerForm flight={flight} passengersNumber={passengers} navigate={navigate} />
       <FlightDetails flight={flight} />
       <CancellationPolicy flight={flight}/>
       <ImportantNotice flight={flight} />
-      <PassengerForm flight={flight} passengersNumber={passengers} navigate={navigate} />
     </Grid>
   );
 };
