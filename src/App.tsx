@@ -8,13 +8,14 @@ import PassengerDetails from "./components/flightDetailAndPassengerDetails/Passe
 import ReviewConfirmation from "./components/ReviewConfirmation";
 import BookingSuccess from "./components/BookingSuccess";
 import ManageReservation from "./components/ManageReservation";
+import HomePage from "./Pages/Home";
 
 const App = () => {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<FlightSearch />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/results" element={<FlightSearchResults />} />
         <Route path="/passenger-details" element={<PassengerDetails />} /> 
         <Route path="/review-confirmation" element={<ReviewConfirmation />} />

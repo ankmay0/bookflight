@@ -8,15 +8,63 @@ import {
   Stack,
   CircularProgress,
 } from "@mui/material";
-import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
-import FlightLandIcon from "@mui/icons-material/FlightLand";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import Divider from "@mui/material/Divider";
 import Lottie from "lottie-react";
 import SidebarFilters from "./SidebarFilters";
 import { Flight } from "../Types/FlightTypes";
+
+
+// --- Airline utilities --- //
+const airlinesData: { [key: string]: { name: string; icon: string } } = {
+  DL: { name: "Delta Air Lines", icon: "https://content.airhex.com/content/logos/airlines_DL_75_75_s.png" },
+  AA: { name: "American Airlines", icon: "https://content.airhex.com/content/logos/airlines_AA_75_75_s.png" },
+  UA: { name: "United Airlines", icon: "https://content.airhex.com/content/logos/airlines_UA_75_75_s.png" },
+  WN: { name: "Southwest Airlines", icon: "https://content.airhex.com/content/logos/airlines_WN_75_75_s.png" },
+  B6: { name: "JetBlue Airways", icon: "https://content.airhex.com/content/logos/airlines_B6_75_75_s.png" },
+  NK: { name: "Spirit Airlines", icon: "https://content.airhex.com/content/logos/airlines_NK_75_75_s.png" },
+  F9: { name: "Frontier Airlines", icon: "https://content.airhex.com/content/logos/airlines_F9_75_75_s.png" },
+  AI: { name: "Air India", icon: "https://content.airhex.com/content/logos/airlines_AI_75_75_s.png" },
+  "6E": { name: "IndiGo", icon: "https://content.airhex.com/content/logos/airlines_6E_75_75_s.png" },
+  SG: { name: "SpiceJet", icon: "https://content.airhex.com/content/logos/airlines_SG_75_75_s.png" },
+  UK: { name: "Vistara", icon: "https://content.airhex.com/content/logos/airlines_UK_75_75_s.png" },
+  AS: { name: "Alaska Airlines", icon: "https://content.airhex.com/content/logos/airlines_AS_75_75_s.png" },
+  HA: { name: "Hawaiian Airlines", icon: "https://content.airhex.com/content/logos/airlines_HA_75_75_s.png" },
+};
+
+
+const getAirlineName = (code: string): string =>
+  airlinesData[code as keyof typeof airlinesData]?.name || code;
+
+
+const getAirlineIconURL = (code: string): string =>
+  airlinesData[code as keyof typeof airlinesData]?.icon ||
+  `https://content.airhex.com/content/logos/airlines_${code?.toUpperCase?.() ?? ""}_75_75_s.png`;
+
+
+// --- Airport (city) mapping --- //
+const airportCityMap: { [key: string]: string } = {
+  EWR: "Newark",
+  JFK: "New York",
+  LGA: "New York",
+  LAX: "Los Angeles",
+  ORD: "Chicago",
+  ATL: "Atlanta",
+  DFW: "Dallas",
+  SFO: "San Francisco",
+  SEA: "Seattle",
+  BOS: "Boston",
+  DEL: "Delhi",
+  BOM: "Mumbai",
+  BLR: "Bengaluru",
+  MAA: "Chennai",
+  HYD: "Hyderabad",
+  CCU: "Kolkata",
+  DXB: "Dubai",
+  // ...add more as needed
+};
+const getCityName = (airportCode: string): string =>
+  airportCityMap[airportCode?.toUpperCase?.()] || airportCode;
+
 
 interface FlightListProps {
   loading: boolean;
@@ -44,6 +92,157 @@ interface FlightListProps {
   setSelectedDepartureFlight: React.Dispatch<React.SetStateAction<Flight | null>>;
 }
 
+
+// Extracted FlightCard component for reusability
+const FlightCard: React.FC<{
+  flight: Flight;
+  tripIndex: number;
+  onSelect: () => void;
+  mapStopsToLabel: (stops: number | undefined) => string;
+}> = ({ flight, tripIndex, onSelect, mapStopsToLabel }) => {
+  const trip = flight.trips[tripIndex];
+  const firstLeg = trip?.legs?.[0];
+
+
+  const prettyTime = (dt: string) => (
+    <span style={{ fontWeight: 700, fontSize: 24 }}>
+      {new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+    </span>
+  );
+
+
+  const CityConnectorLine = () => (
+    <Box
+      sx={{
+        height: 4,
+        background: "linear-gradient(90deg, #209e48 70%, #8fdc94 100%)",
+        borderRadius: 2,
+        minWidth: 32,
+        mx: 1.5,
+        display: "inline-block",
+      }}
+    />
+  );
+
+
+  const cityText = (airport: string) => (
+    <span>
+      <span style={{ fontWeight: 600, fontSize: 16, color: "#222" }}>{getCityName(airport)}</span>
+      <span style={{ color: "#888", fontWeight: 400, fontSize: 14, marginLeft: 4 }}>({airport})</span>
+    </span>
+  );
+
+
+  // Helper to format price safely
+  const formatPrice = (price: number | string | undefined) => {
+    if (typeof price === "number") {
+      return price.toLocaleString("en-IN");
+    }
+    return String(price ?? 0);
+  };
+
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 3,
+        p: 3,
+        backgroundColor: "#ffffff",
+        border: "1px solid #ddd",
+        cursor: "pointer",
+        transition: "border-color 0.3s, background-color 0.3s",
+        "&:hover": {
+          borderColor: "#aaa",
+          backgroundColor: "#ffffff",
+        },
+      }}
+      onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      <Grid container alignItems="center" justifyContent="space-between">
+        <Grid item xs={9}>
+          <Typography variant="h6" fontWeight={700} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {firstLeg && (
+              <>
+                <img
+                  src={getAirlineIconURL(firstLeg.operatingCarrierCode)}
+                  alt={`${getAirlineName(firstLeg.operatingCarrierCode)} logo`}
+                  style={{ height: 28, width: 28, marginRight: 8, verticalAlign: "middle", borderRadius: 4, background: "#fff" }}
+                />
+                <strong style={{ fontWeight: 800 }}>{getAirlineName(firstLeg.operatingCarrierCode)}</strong>{" "}
+                <span style={{ fontWeight: 700 }}>{firstLeg.flightNumber}</span>
+              </>
+            )}
+          </Typography>
+          <Typography variant="body1" fontWeight={600} color="text.secondary" sx={{ mt: 0.5 }}>
+            {mapStopsToLabel(trip?.stops)}
+          </Typography>
+        </Grid>
+        <Grid item xs={3} sx={{ textAlign: "right" }}>
+          <Typography
+            variant="h6"
+            fontWeight={700}
+            sx={{ color: "green", padding: "8px 16px" }} // Added padding for breathing space
+          >
+            ₹{formatPrice(flight.totalPrice)}
+          </Typography>
+        </Grid>
+      </Grid>
+      <Divider sx={{ my: 2 }} />
+      <Box>
+        {trip?.legs?.map((leg, lIdx) => (
+          <Box
+            key={lIdx}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              my: 2,
+              px: 2,
+              py: 1.5,
+              borderRadius: 2,
+              bgcolor: "#ffffff",
+              border: "1px solid #eee",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", flex: 1, overflow: "auto" }}>
+              {/* Departure */}
+              <Box sx={{ textAlign: "right", minWidth: 130, pr: 1 }}>
+                {prettyTime(leg.departureDateTime)}
+                <br />
+                {cityText(leg.departureAirport)}
+              </Box>
+              <CityConnectorLine />
+              {/* Arrival */}
+              <Box sx={{ textAlign: "left", minWidth: 130, pl: 1 }}>
+                {prettyTime(leg.arrivalDateTime)}
+                <br />
+                {cityText(leg.arrivalAirport)}
+              </Box>
+            </Box>
+            {/* Duration and Aircraft */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5, minWidth: 120 }}>
+              <span style={{ color: "#666", fontWeight: 600, fontSize: 15 }}>{leg.duration}</span>
+              <span style={{ color: "#aaa", fontSize: 14 }}>
+                Aircraft: {leg.aircraftCode}
+              </span>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Paper>
+  );
+};
+
+
 const FlightList: React.FC<FlightListProps> = ({
   loading,
   lottieJson,
@@ -69,14 +268,11 @@ const FlightList: React.FC<FlightListProps> = ({
   maxPrice,
   setSelectedDepartureFlight,
 }) => {
-  const departureFlights = filteredFlights.filter(
-    (flight) => flight.trips[0]?.from === from && flight.trips[0]?.to === to
-  );
+  const departureFlights = filteredFlights.filter((flight) => flight.trips[0]?.from === from && flight.trips[0]?.to === to);
   const returnFlights = selectedDepartureFlight
-    ? filteredFlights.filter(
-        (flight) => flight.trips[1]?.from === to && flight.trips[1]?.to === from
-      )
+    ? filteredFlights.filter((flight) => flight.trips[1]?.from === to && flight.trips[1]?.to === from)
     : [];
+
 
   return (
     <Grid container spacing={3}>
@@ -101,298 +297,64 @@ const FlightList: React.FC<FlightListProps> = ({
       <Grid item xs={12} md={showFilters ? 9 : 12}>
         {loading ? (
           lottieJson ? (
-            <Lottie
-              animationData={lottieJson}
-              style={{ height: 200, width: 200, margin: "0 auto" }}
-              loop
-              autoplay
-            />
+            <Lottie animationData={lottieJson} style={{ height: 200, width: 200, margin: "0 auto" }} loop autoplay />
           ) : (
-            <CircularProgress />
+            <CircularProgress sx={{ display: "block", margin: "0 auto" }} />
           )
         ) : !selectedDepartureFlight ? (
           <Stack spacing={3}>
-            <Typography variant="h6">Select Departure Flight</Typography>
+            <Typography variant="h5" fontWeight={600}>
+              Choose Your Departure Flight from {getCityName(from)} to {getCityName(to)}
+            </Typography>
             {departureFlights.length === 0 ? (
-              <Typography>No departure flights found.</Typography>
+              <Typography variant="body1" color="text.secondary">
+                No departure flights available. Try adjusting your filters.
+              </Typography>
             ) : (
               departureFlights.map((flight, idx) => (
-                <Paper
+                <FlightCard
                   key={idx}
-                  elevation={4}
-                  sx={{
-                    borderRadius: 3,
-                    p: 3,
-                    backgroundColor: "#ffffff",
-                    boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                      <Typography
-                        variant="h6"
-                        fontWeight={600}
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <AirplanemodeActiveIcon />
-                        {flight.trips?.[0]?.legs?.[0]?.operatingCarrierCode || ""}{" "}
-                        {flight.trips?.[0]?.legs?.[0]?.flightNumber || ""}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {mapStopsToLabel(flight.trips?.[0]?.stops)} | ₹{flight.totalPrice}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleDepartureSelect(flight)}
-                      >
-                        Select Departure
-                      </Button>
-                    </Grid>
-                  </Grid>
-                  <Divider sx={{ my: 2 }} />
-                  <Box>
-                    {flight.trips[0].legs.map((leg, lIdx) => (
-                      <Grid
-                        container
-                        spacing={2}
-                        alignItems="center"
-                        justifyContent="space-between"
-                        key={lIdx}
-                        sx={{ mb: 1 }}
-                      >
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <FlightTakeoffIcon fontSize="small" sx={{ mr: 1 }} />
-                            <strong>
-                              {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </strong>{" "}
-                            ({leg.departureAirport})
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <FlightLandIcon fontSize="small" sx={{ mr: 1 }} />
-                            <strong>
-                              {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </strong>{" "}
-                            ({leg.arrivalAirport})
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <AccessTimeIcon fontSize="small" sx={{ mr: 1 }} />
-                            {leg.duration}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} />
-                            Aircraft: {leg.aircraftCode}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    ))}
-                  </Box>
-                </Paper>
+                  flight={flight}
+                  tripIndex={0}
+                  onSelect={() => handleDepartureSelect(flight)}
+                  mapStopsToLabel={mapStopsToLabel}
+                />
               ))
             )}
           </Stack>
         ) : (
           <Stack spacing={3}>
-            <Typography variant="h6">Selected Departure Flight</Typography>
-            <Paper
-              elevation={4}
-              sx={{
-                borderRadius: 3,
-                p: 3,
-                backgroundColor: "#e3f2fd",
-                boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Grid container alignItems="center" justifyContent="space-between">
-                <Grid item>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                  >
-                    <AirplanemodeActiveIcon />
-                    {selectedDepartureFlight.trips?.[0]?.legs?.[0]?.operatingCarrierCode || ""}{" "}
-                    {selectedDepartureFlight.trips?.[0]?.legs?.[0]?.flightNumber || ""}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {mapStopsToLabel(selectedDepartureFlight.trips?.[0]?.stops)} | ₹
-                    {selectedDepartureFlight.totalPrice}
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setSelectedDepartureFlight(null)}
-                  >
-                    Change Departure
-                  </Button>
-                </Grid>
-              </Grid>
-              <Divider sx={{ my: 2 }} />
-              <Box>
-                {selectedDepartureFlight.trips[0].legs.map((leg, lIdx) => (
-                  <Grid
-                    container
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="space-between"
-                    key={lIdx}
-                    sx={{ mb: 1 }}
-                  >
-                    <Grid item xs={12} md={3}>
-                      <Typography>
-                        <FlightTakeoffIcon fontSize="small" sx={{ mr: 1 }} />
-                        <strong>
-                          {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </strong>{" "}
-                        ({leg.departureAirport})
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Typography>
-                        <FlightLandIcon fontSize="small" sx={{ mr: 1 }} />
-                        <strong>
-                          {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </strong>{" "}
-                        ({leg.arrivalAirport})
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Typography>
-                        <AccessTimeIcon fontSize="small" sx={{ mr: 1 }} />
-                        {leg.duration}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Typography>
-                        <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} />
-                        Aircraft: {leg.aircraftCode}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                ))}
-              </Box>
-            </Paper>
-            <Typography variant="h6">Select Return Flight</Typography>
+            <Typography variant="h5" fontWeight={600}>
+              Choose Your Return Flight from {getCityName(to)} to {getCityName(from)}
+            </Typography>
             {returnFlights.length === 0 ? (
-              <Typography>No return flights found.</Typography>
+              <Typography variant="body1" color="text.secondary">
+                No return flights available. Try adjusting your filters or select a different departure.
+              </Typography>
             ) : (
               returnFlights.map((flight, idx) => (
-                <Paper
+                <FlightCard
                   key={idx}
-                  elevation={4}
-                  sx={{
-                    borderRadius: 3,
-                    p: 3,
-                    backgroundColor: "#ffffff",
-                    boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                      <Typography
-                        variant="h6"
-                        fontWeight={600}
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <AirplanemodeActiveIcon />
-                        {flight.trips?.[1]?.legs?.[0]?.operatingCarrierCode || ""}{" "}
-                        {flight.trips?.[1]?.legs?.[0]?.flightNumber || ""}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {mapStopsToLabel(flight.trips?.[1]?.stops)} | ₹{flight.totalPrice}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleConfirmSelection(flight)}
-                      >
-                        Select Return
-                      </Button>
-                    </Grid>
-                  </Grid>
-                  <Divider sx={{ my: 2 }} />
-                  <Box>
-                    {flight.trips[1].legs.map((leg, lIdx) => (
-                      <Grid
-                        container
-                        spacing={2}
-                        alignItems="center"
-                        justifyContent="space-between"
-                        key={lIdx}
-                        sx={{ mb: 1 }}
-                      >
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <FlightTakeoffIcon fontSize="small" sx={{ mr: 1 }} />
-                            <strong>
-                              {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </strong>{" "}
-                            ({leg.departureAirport})
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <FlightLandIcon fontSize="small" sx={{ mr: 1 }} />
-                            <strong>
-                              {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </strong>{" "}
-                            ({leg.arrivalAirport})
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <AccessTimeIcon fontSize="small" sx={{ mr: 1 }} />
-                            {leg.duration}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                          <Typography>
-                            <AttachMoneyIcon fontSize="small" sx={{ mr: 1 }} />
-                            Aircraft: {leg.aircraftCode}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    ))}
-                  </Box>
-                </Paper>
+                  flight={flight}
+                  tripIndex={1}
+                  onSelect={() => handleConfirmSelection(flight)}
+                  mapStopsToLabel={mapStopsToLabel}
+                />
               ))
             )}
+            <Button
+              variant="outlined"
+              onClick={() => setSelectedDepartureFlight(null)}
+              sx={{ mt: 2, alignSelf: "flex-start" }}
+            >
+              Change Departure Flight
+            </Button>
           </Stack>
         )}
       </Grid>
     </Grid>
   );
 };
+
 
 export default FlightList;
