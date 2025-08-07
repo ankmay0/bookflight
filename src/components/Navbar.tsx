@@ -25,6 +25,7 @@ const navItems = [
   "Car Rental",
   "Packages",
   "Support",
+  "Check Booking",
 ];
 
 const Navbar: React.FC = () => {
@@ -46,6 +47,7 @@ const Navbar: React.FC = () => {
     else if (item === "Car Rental") navigate("/cars");
     else if (item === "Packages") navigate("/packages");
     else if (item === "Support") navigate("/support");
+    else if (item === "Check Booking") navigate("/manage-reservation");
   };
 
   const drawer = (
