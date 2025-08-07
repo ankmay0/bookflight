@@ -407,7 +407,7 @@ const FlightSearch: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={2}>
             <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
               Passengers
             </Typography>
@@ -552,7 +552,9 @@ const FlightSearch: React.FC = () => {
               </Popover>
             </Box>
 
-            <Grid item xs={4}>
+            
+          </Grid>
+                <Grid item xs={4} sm={6} md={2}>
               <Button
                 variant="contained"
                 startIcon={<Search />}
@@ -560,7 +562,7 @@ const FlightSearch: React.FC = () => {
                 disabled={isSubmitting}
                 fullWidth
                 sx={{
-                  mt: 3,
+                  mt: { xs: 0, sm: 3.5 },
                   bgcolor: "#2c39e8",
                   color: "#fff",
                   fontWeight: "bold",
@@ -575,8 +577,6 @@ const FlightSearch: React.FC = () => {
                 Search
               </Button>
             </Grid>
-          </Grid>
-
         </Grid>
       </Box>
       <Snackbar
