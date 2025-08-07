@@ -158,8 +158,7 @@ const FlightSearch: React.FC = () => {
           sx={{
             display: "flex",
             alignItems: "center",
-            mb: 4,
-            gap: 2,
+            gap: 1,
           }}
         >
           <RadioGroup
@@ -213,7 +212,7 @@ const FlightSearch: React.FC = () => {
           </Select>
         </Box>
 
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid item xs={12} sm={6} md={3}>
             <Typography fontWeight={400} mb={1} sx={{ color: "rgba(0, 0, 0, 0.55)" }}>
               From
