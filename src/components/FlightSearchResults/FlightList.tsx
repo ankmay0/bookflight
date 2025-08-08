@@ -12,6 +12,8 @@ import Divider from "@mui/material/Divider";
 import Lottie from "lottie-react";
 import SidebarFilters from "./SidebarFilters";
 import { Flight } from "../Types/FlightTypes";
+import { useNavigate } from "react-router-dom";
+
 
 
 // --- Airline utilities --- //
@@ -103,13 +105,11 @@ const FlightCard: React.FC<{
   const trip = flight.trips[tripIndex];
   const firstLeg = trip?.legs?.[0];
 
-
   const prettyTime = (dt: string) => (
     <span style={{ fontWeight: 700, fontSize: 24 }}>
       {new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
     </span>
   );
-
 
   const CityConnectorLine = () => (
     <Box
@@ -124,7 +124,6 @@ const FlightCard: React.FC<{
     />
   );
 
-
   const cityText = (airport: string) => (
     <span>
       <span style={{ fontWeight: 600, fontSize: 16, color: "#222" }}>{getCityName(airport)}</span>
@@ -132,15 +131,12 @@ const FlightCard: React.FC<{
     </span>
   );
 
-
-  // Helper to format price safely
   const formatPrice = (price: number | string | undefined) => {
     if (typeof price === "number") {
       return price.toLocaleString("en-IN");
     }
     return String(price ?? 0);
   };
-
 
   return (
     <Paper
@@ -150,21 +146,11 @@ const FlightCard: React.FC<{
         p: 3,
         backgroundColor: "#ffffff",
         border: "1px solid #ddd",
-        cursor: "pointer",
         transition: "border-color 0.3s, background-color 0.3s",
         "&:hover": {
           borderColor: "#aaa",
           backgroundColor: "#ffffff",
         },
-      }}
-      onClick={onSelect}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
       }}
     >
       <Grid container alignItems="center" justifyContent="space-between">
@@ -190,13 +176,15 @@ const FlightCard: React.FC<{
           <Typography
             variant="h6"
             fontWeight={700}
-            sx={{ color: "green", padding: "8px 16px" }} // Added padding for breathing space
+            sx={{ color: "green", padding: "8px 16px" }}
           >
             ₹{formatPrice(flight.totalPrice)}
           </Typography>
         </Grid>
       </Grid>
+
       <Divider sx={{ my: 2 }} />
+
       <Box>
         {trip?.legs?.map((leg, lIdx) => (
           <Box
@@ -214,21 +202,18 @@ const FlightCard: React.FC<{
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", flex: 1, overflow: "auto" }}>
-              {/* Departure */}
               <Box sx={{ textAlign: "right", minWidth: 130, pr: 1 }}>
                 {prettyTime(leg.departureDateTime)}
                 <br />
                 {cityText(leg.departureAirport)}
               </Box>
               <CityConnectorLine />
-              {/* Arrival */}
               <Box sx={{ textAlign: "left", minWidth: 130, pl: 1 }}>
                 {prettyTime(leg.arrivalDateTime)}
                 <br />
                 {cityText(leg.arrivalAirport)}
               </Box>
             </Box>
-            {/* Duration and Aircraft */}
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5, minWidth: 120 }}>
               <span style={{ color: "#666", fontWeight: 600, fontSize: 15 }}>{leg.duration}</span>
               <span style={{ color: "#aaa", fontSize: 14 }}>
@@ -238,9 +223,17 @@ const FlightCard: React.FC<{
           </Box>
         ))}
       </Box>
+
+      {/* Select Button */}
+      <Box sx={{ textAlign: "right", mt: 2 }}>
+        <Button variant="contained" color="primary" onClick={onSelect}>
+          Select
+        </Button>
+      </Box>
     </Paper>
   );
 };
+
 
 
 const FlightList: React.FC<FlightListProps> = ({
@@ -331,6 +324,8 @@ const FlightList: React.FC<FlightListProps> = ({
               <Typography variant="body1" color="text.secondary">
                 No return flights available. Try adjusting your filters or select a different departure.
               </Typography>
+
+
             ) : (
               returnFlights.map((flight, idx) => (
                 <FlightCard
@@ -351,6 +346,8 @@ const FlightList: React.FC<FlightListProps> = ({
             </Button>
           </Stack>
         )}
+        
+
       </Grid>
     </Grid>
   );
