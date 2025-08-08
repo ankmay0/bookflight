@@ -8,6 +8,7 @@ import {
   Grid,
 } from "@mui/material";
 import { Flight } from "../Types/FlightTypes";
+import CarBunddle from "../CarBunddle";
 
 // Airline data mapping
 const airlinesData: { [key: string]: { name: string; icon: string } } = {
@@ -138,8 +139,9 @@ const TripReview: React.FC<TripReviewProps> = ({
           leg={returnLeg}
           flight={returnFlight}
         />
+        <CarBunddle />
       </Grid>
-
+      
       {/* Right column */}
       <Grid item xs={12} md={4}>
         <Paper
@@ -194,8 +196,12 @@ const TripReview: React.FC<TripReviewProps> = ({
             Check Out
           </Button>
         </Paper>
+        
       </Grid>
+      
     </Grid>
+
+    
   );
 };
 
