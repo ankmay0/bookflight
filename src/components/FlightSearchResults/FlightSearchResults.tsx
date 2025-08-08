@@ -35,6 +35,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Flight } from "../Types/FlightTypes";
 import Lottie from "lottie-react";
 import FlightList from "./FlightList";
+import TripReview from "./TripReview";
+
+export type BookingStep = 'departure' | 'return' | 'review';
 
 // --- Utilities --- //
 const airlinesData: { [key: string]: { name: string; icon: string } } = {
@@ -105,6 +108,8 @@ const FlightSearchResults: React.FC = () => {
   const [lottieJson, setLottieJson] = useState<any>(null);
   const [selectedDepartureFlight, setSelectedDepartureFlight] = useState<Flight | null>(null);
   const [expandedFilters, setExpandedFilters] = useState<boolean>(false);
+  const [selectedReturnFlight, setSelectedReturnFlight] = useState<Flight | null>(null);
+  const [currentStep, setCurrentStep] = useState<BookingStep>('departure');
 
   // --- Responsive & Routing ---
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -294,17 +299,17 @@ const FlightSearchResults: React.FC = () => {
                 label={
                   returnDate
                     ? `${new Date(departDate).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })} - ${new Date(returnDate).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}`
+                      day: "numeric",
+                      month: "short",
+                    })} - ${new Date(returnDate).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                    })}`
                     : new Date(departDate).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
                 }
                 size="small"
                 variant="outlined"
@@ -353,40 +358,89 @@ const FlightSearchResults: React.FC = () => {
       border: "1px solid",
       borderColor: "divider",
       boxShadow: "none",
+      display: 'inline-flex', 
+      alignItems: 'center', 
     };
-    if (selectedDepartureFlight) {
-      const firstLeg = selectedDepartureFlight.trips?.[0]?.legs?.[0];
-      const airline = firstLeg ? getAirlineName(firstLeg.operatingCarrierCode) : "";
-      return (
-        <Box mb={2}>
-          <Breadcrumbs
-            separator={<NavigateNextIcon fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ ml: { xs: 0.5, md: 0 } }}
-          >
-            <Typography sx={{ ...highlight, bgcolor: "white" }}>
-              {airline && from && to ? `${airline} · ${from} → ${to}` : ""}
-            </Typography>
-            <Typography sx={highlight}>Choose returning flight</Typography>
-            <Typography color="text.disabled">Review your trip</Typography>
-          </Breadcrumbs>
+
+    const inactive = {
+      color: "text.disabled",
+      px: 1.5,
+      py: 0.5,
+      display: 'inline-flex', // Add this
+      alignItems: 'center',
+    };
+
+    const departureFlightInfo = selectedDepartureFlight?.trips?.[0]?.legs?.[0];
+    const returnFlightInfo = selectedReturnFlight?.trips?.[1]?.legs?.[0];
+
+    return (
+      <Box mb={2}>
+        <Breadcrumbs
+          separator={<NavigateNextIcon fontSize="small" />}
+          aria-label="breadcrumb"
+          sx={{ ml: { xs: 0.5, md: 0 } }}
+        >
+          {currentStep === 'departure' ? (
+            <>
+              <Typography sx={highlight}>Select departure</Typography>
+              <Typography sx={inactive}>Choose returning flight</Typography>
+              <Typography sx={inactive}>Review your trip</Typography>
+            </>
+          ) : currentStep === 'return' ? (
+            <>
+              <Typography sx={highlight}>
+                {departureFlightInfo ?
+                  `${getAirlineName(departureFlightInfo.operatingCarrierCode)} · ${from} → ${to}` :
+                  "Departure selected"}
+              </Typography>
+              <Typography sx={highlight}>Choose returning flight</Typography>
+              <Typography sx={inactive}>Review your trip</Typography>
+            </>
+          ) : (
+            <>
+              <Typography sx={highlight}>
+                {departureFlightInfo ?
+                  `${getAirlineName(departureFlightInfo.operatingCarrierCode)} · ${from} → ${to}` :
+                  "Departure selected"}
+              </Typography>
+              <Typography sx={highlight}>
+                {returnFlightInfo ?
+                  `${getAirlineName(returnFlightInfo.operatingCarrierCode)} · ${to} → ${from}` :
+                  "Return selected"}
+              </Typography>
+              <Typography sx={highlight}>Review your trip</Typography>
+            </>
+          )}
+        </Breadcrumbs>
+
+        {currentStep === 'return' && (
           <Link
             underline="hover"
-            onClick={() => setSelectedDepartureFlight(null)}
+            onClick={() => setCurrentStep('departure')}
             sx={{ mt: 0.5, cursor: "pointer", ml: 1.5, fontSize: ".97em" }}
           >
             Change flight
           </Link>
-        </Box>
-      );
-    }
-    return (
-      <Box mb={2}>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
-          <Typography sx={highlight}>Select departure</Typography>
-          <Typography color="text.disabled">Choose returning flight</Typography>
-          <Typography color="text.disabled">Review your trip</Typography>
-        </Breadcrumbs>
+        )}
+
+        {currentStep === 'review' && (
+          <Box>
+            <Link
+              underline="hover"
+              onClick={() => setCurrentStep('departure')}
+              sx={{ mt: 0.5, cursor: "pointer", fontSize: ".97em", mr :3.5 }}
+            >
+              Change flight
+            </Link>
+            <Link
+              underline="hover"
+              onClick={() => setCurrentStep('return')}
+              sx={{ mt: 0.5, cursor: "pointer", fontSize: ".97em" , ml: 3}}
+            >
+              Change flight
+            </Link>
+          </Box>
+        )}
       </Box>
     );
   };
@@ -514,66 +568,97 @@ const FlightSearchResults: React.FC = () => {
     <Box sx={{ minHeight: "100vh", bgcolor: "white", p: { xs: 1, md: 4 } }}>
       {renderSearchHeader()}
       {renderBreadcrumb()}
-      {renderFlightCount()}
 
-      {!loading && filteredFlights.length === 0 && (
-        <Paper sx={{ p: 4, mt: 4, mb: 4, borderRadius: 3, textAlign: "center", border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
-          <AirplaneIcon sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
-          <Typography variant="h5" fontWeight={700}>
-            No flights found
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Try adjusting your filters or broaden your search dates.
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setSelectedAirlines([]);
-              setSelectedStops([]);
-              setSelectedTimes([]);
-              setPriceRange([minPrice, maxPrice]);
-            }}
-          >
-            Clear All Filters
-          </Button>
-        </Paper>
-      )}
-
-      <FlightList
-        loading={loading}
-        lottieJson={lottieJson}
-        filteredFlights={filteredFlights}
-        selectedDepartureFlight={selectedDepartureFlight}
-        from={from}
-        to={to}
-        showFilters={showFilters}
-        handleDepartureSelect={setSelectedDepartureFlight}
-        handleConfirmSelection={(flight) =>
-          navigate("/passenger-details", {
+      {currentStep === 'review' ? (
+        <TripReview
+          departureFlight={selectedDepartureFlight!}
+          returnFlight={selectedReturnFlight!}
+          passengers={(adults || 0) + (children || 0)}
+          from={from}
+          to={to}
+          fromDetails={fromDetails}
+          toDetails={toDetails}
+          onBack={() => setCurrentStep('return')}
+          onConfirm={() => navigate("/passenger-details", {
             state: {
               flight: {
                 ...selectedDepartureFlight,
-                trips: [selectedDepartureFlight!.trips[0], flight.trips[1]],
+                trips: [selectedDepartureFlight!.trips[0], selectedReturnFlight!.trips[1]],
               },
               passengers: (adults || 0) + (children || 0),
             },
-          })
-        }
-        mapStopsToLabel={mapStopsToLabel}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        selectedTimes={selectedTimes}
-        setSelectedTimes={setSelectedTimes}
-        selectedStops={selectedStops}
-        setSelectedStops={setSelectedStops}
-        selectedAirlines={selectedAirlines}
-        setSelectedAirlines={setSelectedAirlines}
-        availableStops={availableStops}
-        availableAirlines={availableAirlines}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        setSelectedDepartureFlight={setSelectedDepartureFlight}
-      />
+          })}
+        />
+      ) : (
+        <>
+          {renderFlightCount()}
+
+          {!loading && filteredFlights.length === 0 && (
+            <Paper sx={{
+              p: 4,
+              mt: 4,
+              mb: 4,
+              borderRadius: 3,
+              textAlign: "center",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow: "none"
+            }}>
+              <AirplaneIcon sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
+              <Typography variant="h5" fontWeight={700}>
+                No flights found
+              </Typography>
+              <Typography color="text.secondary" sx={{ mb: 3 }}>
+                Try adjusting your filters or broaden your search dates.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setSelectedAirlines([]);
+                  setSelectedStops([]);
+                  setSelectedTimes([]);
+                  setPriceRange([minPrice, maxPrice]);
+                }}
+              >
+                Clear All Filters
+              </Button>
+            </Paper>
+          )}
+
+          <FlightList
+            loading={loading}
+            lottieJson={lottieJson}
+            filteredFlights={filteredFlights}
+            selectedDepartureFlight={selectedDepartureFlight}
+            from={from}
+            to={to}
+            showFilters={showFilters}
+            handleDepartureSelect={(flight) => {
+              setSelectedDepartureFlight(flight);
+              setCurrentStep('return');
+            }}
+            handleConfirmSelection={(flight) => {
+              setSelectedReturnFlight(flight);
+              setCurrentStep('review');
+            }}
+            mapStopsToLabel={mapStopsToLabel}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            selectedTimes={selectedTimes}
+            setSelectedTimes={setSelectedTimes}
+            selectedStops={selectedStops}
+            setSelectedStops={setSelectedStops}
+            selectedAirlines={selectedAirlines}
+            setSelectedAirlines={setSelectedAirlines}
+            availableStops={availableStops}
+            availableAirlines={availableAirlines}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            setSelectedDepartureFlight={setSelectedDepartureFlight}
+            currentStep={currentStep}
+          />
+        </>
+      )}
     </Box>
   );
 };

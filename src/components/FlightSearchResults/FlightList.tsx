@@ -13,6 +13,7 @@ import Lottie from "lottie-react";
 import SidebarFilters from "./SidebarFilters";
 import { Flight } from "../Types/FlightTypes";
 import { useNavigate } from "react-router-dom";
+import { BookingStep } from "./FlightSearchResults";
 
 
 
@@ -91,7 +92,8 @@ interface FlightListProps {
   availableAirlines: string[];
   minPrice: number;
   maxPrice: number;
-  setSelectedDepartureFlight: React.Dispatch<React.SetStateAction<Flight | null>>;
+  setSelectedDepartureFlight?: React.Dispatch<React.SetStateAction<Flight | null>>;
+  currentStep: BookingStep;
 }
 
 
@@ -260,7 +262,12 @@ const FlightList: React.FC<FlightListProps> = ({
   minPrice,
   maxPrice,
   setSelectedDepartureFlight,
+  currentStep,
 }) => {
+  const flightsToShow = currentStep === 'departure' 
+    ? filteredFlights.filter(f => f.trips[0]?.from === from && f.trips[0]?.to === to)
+    : filteredFlights.filter(f => f.trips[1]?.from === to && f.trips[1]?.to === from);
+
   const departureFlights = filteredFlights.filter((flight) => flight.trips[0]?.from === from && flight.trips[0]?.to === to);
   const returnFlights = selectedDepartureFlight
     ? filteredFlights.filter((flight) => flight.trips[1]?.from === to && flight.trips[1]?.to === from)
@@ -314,6 +321,16 @@ const FlightList: React.FC<FlightListProps> = ({
                 />
               ))
             )}
+
+               {setSelectedDepartureFlight && (
+            <Button
+              variant="outlined"
+              onClick={() => setSelectedDepartureFlight(null)}
+              sx={{ mt: 2, alignSelf: "flex-start" }}
+            >
+              Change Departure Flight
+            </Button>
+          )}
           </Stack>
         ) : (
           <Stack spacing={3}>
@@ -339,7 +356,7 @@ const FlightList: React.FC<FlightListProps> = ({
             )}
             <Button
               variant="outlined"
-              onClick={() => setSelectedDepartureFlight(null)}
+              onClick={() => setSelectedDepartureFlight && setSelectedDepartureFlight(null)}
               sx={{ mt: 2, alignSelf: "flex-start" }}
             >
               Change Departure Flight
