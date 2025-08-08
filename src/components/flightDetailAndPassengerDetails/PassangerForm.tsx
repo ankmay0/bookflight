@@ -12,13 +12,17 @@ import {
   FormControl,
   InputLabel,
   Select,
-  FormHelperText,
+  Chip,
+  Stack,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import LuggageIcon from "@mui/icons-material/Luggage";
 
 interface PassengerFormProps {
   flight: any;
@@ -26,7 +30,11 @@ interface PassengerFormProps {
   passengersNumber?: number;
 }
 
-const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passengersNumber }) => {
+const PassengerForm: React.FC<PassengerFormProps> = ({
+  flight,
+  navigate,
+  passengersNumber,
+}) => {
   const [passengers, setPassengers] = useState([
     { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
   ]);
@@ -57,7 +65,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
     }
   }, [passengersNumber]);
 
-  const validatePassenger = (passenger: any, index: number) => {
+  const validatePassenger = (passenger: any) => {
     const newErrors = { firstName: "", lastName: "", dob: "" };
     if (!passenger.firstName) newErrors.firstName = "First name is required";
     if (!passenger.lastName) newErrors.lastName = "Last name is required";
@@ -68,7 +76,8 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
   const validateContact = () => {
     const newErrors = { email: "", phone: "" };
     if (!contact.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(contact.email)) newErrors.email = "Invalid email format";
+    else if (!/\S+@\S+\.\S+/.test(contact.email))
+      newErrors.email = "Invalid email format";
     if (!contact.phone) newErrors.phone = "Phone number is required";
     return newErrors;
   };
@@ -82,7 +91,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
     setPassengers(updated);
 
     const newErrors = [...errors.passengers];
-    newErrors[index] = validatePassenger(updated[index], index);
+    newErrors[index] = validatePassenger(updated[index]);
     setErrors((prev) => ({ ...prev, passengers: newErrors }));
   };
 
@@ -112,13 +121,14 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
   };
 
   const handleConfirm = () => {
-    const passengerErrors = passengers.map((p, i) => validatePassenger(p, i));
+    const passengerErrors = passengers.map((p) => validatePassenger(p));
     const contactErrors = validateContact();
     setErrors({ passengers: passengerErrors, contact: contactErrors });
 
-    const hasErrors = passengerErrors.some(
-      (p) => p.firstName || p.lastName || p.dob
-    ) || contactErrors.email || contactErrors.phone;
+    const hasErrors =
+      passengerErrors.some((p) => p.firstName || p.lastName || p.dob) ||
+      contactErrors.email ||
+      contactErrors.phone;
 
     if (!hasErrors) {
       navigate("/review-confirmation", {
@@ -165,9 +175,22 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
             </Typography>
 
             {passengers.map((passenger, index) => (
-              <Box key={index} mb={4} sx={{ borderBottom: "1px solid #e0e0e0", pb: 2 }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                  <Typography variant="h6" fontWeight={500} sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
+              <Box
+                key={index}
+                mb={4}
+                sx={{ borderBottom: "1px solid #e0e0e0", pb: 2 }}
+              >
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb={2}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight={500}
+                    sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }}
+                  >
                     Passenger {index + 1} {index === 0 && "(Primary Contact)"}
                   </Typography>
                   {index > 0 && (
@@ -183,7 +206,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={2}>
-                    <FormControl fullWidth error={!!errors.passengers[index].firstName}>
+                    <FormControl
+                      fullWidth
+                      error={!!errors.passengers[index].firstName}
+                    >
                       <InputLabel>Title</InputLabel>
                       <Select
                         name="title"
@@ -269,7 +295,10 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
                 textTransform: "none",
                 fontSize: "1rem",
                 py: 1,
-                "&:hover": { bgcolor: "primary.light", color: "primary.contrastText" },
+                "&:hover": {
+                  bgcolor: "primary.light",
+                  color: "primary.contrastText",
+                },
               }}
             >
               Add Another Passenger
@@ -307,7 +336,9 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
                   error={!!errors.contact.email}
                   helperText={errors.contact.email}
                   InputProps={{
-                    startAdornment: <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                    startAdornment: (
+                      <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />
+                    ),
                     sx: { borderRadius: 1 },
                   }}
                 />
@@ -323,7 +354,9 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
                   error={!!errors.contact.phone}
                   helperText={errors.contact.phone}
                   InputProps={{
-                    startAdornment: <PhoneIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                    startAdornment: (
+                      <PhoneIcon sx={{ mr: 1, color: "text.secondary" }} />
+                    ),
                     sx: { borderRadius: 1 },
                   }}
                 />
@@ -332,12 +365,19 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
           </Paper>
         </Grid>
 
-        {/* Booking Summary Section */}
+        {/* Booking Summary Section with full flight details and no scroll bar */}
         <Grid
           item
           xs={12}
           md={4}
-          sx={{ position: { md: "sticky" }, top: { md: 20 }, alignSelf: { md: "flex-start" } }}
+          sx={{
+            position: { md: "sticky" },
+            top: { md: 20 },
+            alignSelf: { md: "flex-start" },
+            height: "auto",
+            minHeight: { md: "calc(100vh - 40px)" },
+            maxHeight: "none",
+          }}
         >
           <Paper
             sx={{
@@ -345,9 +385,12 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
               borderRadius: 2,
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
               bgcolor: "#fff",
-              height: { xs: "auto", md: "calc(100vh - 40px)" },
               display: "flex",
               flexDirection: "column",
+              height: "auto",
+              minHeight: { md: "calc(100vh - 40px)" },
+              maxHeight: "none",
+              // Remove overflow styling to eliminate scroll bar
             }}
           >
             <Typography
@@ -360,36 +403,121 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ flight, navigate, passeng
               Booking Summary
             </Typography>
             <Box mb={2} sx={{ flexGrow: 1 }}>
-              <Typography variant="subtitle1" fontWeight={500}>
-                <FlightTakeoffIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-                Outbound Flight
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              {/* Flight Details Summary */}
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                color="primary"
+                sx={{ fontSize: "1.1rem", mb: 1 }}
+              >
                 {flight.trips[0].from} → {flight.trips[flight.trips.length - 1].to}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {flight.trips[0].airline} {flight.trips[0].flightNumber}
-              </Typography>
+
               <Typography variant="body2" color="text.secondary" mb={2}>
-                Departure: {flight.trips[0].departureTime}
+                {new Date(flight.trips[0].legs[0].departureDateTime).toLocaleDateString([], {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                • {flight.trips[0].stops} stop
+                {flight.trips[0].stops !== 1 ? "s" : ""} • {flight.trips[0].totalFlightDuration}
               </Typography>
+
+              {flight.trips.map((trip: any, tripIdx: number) => (
+                <Box key={tripIdx} mb={2}>
+                  {trip.legs.map((leg: any, legIdx: number) => (
+                    <Box key={legIdx} mb={2}>
+                      {/* Airline and Flight Number */}
+                      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                        <FlightTakeoffIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" fontWeight={500}>
+                          {leg.operatingCarrierCode} {leg.flightNumber}
+                        </Typography>
+                        <Chip
+                          label={leg.aircraftCode}
+                          size="small"
+                          sx={{
+                            bgcolor: "primary.light",
+                            color: "primary.contrastText",
+                            fontSize: "0.7rem",
+                            height: 20,
+                          }}
+                        />
+                      </Stack>
+                      <Box sx={{ pl: 2, borderLeft: "2px solid #e0e0e0" }}>
+                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                          <strong>
+                            {new Date(leg.departureDateTime).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </strong>{" "}
+                          {leg.departureAirport}
+                          {leg.departureTerminal && ` (T${leg.departureTerminal})`}
+                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.5} sx={{ my: 0.5 }}>
+                          <ScheduleIcon fontSize="small" color="action" />
+                          <Typography variant="caption" color="text.secondary">
+                            {leg.duration}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="body2">
+                          <strong>
+                            {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </strong>{" "}
+                          {leg.arrivalAirport}
+                          {leg.arrivalTerminal && ` (T${leg.arrivalTerminal})`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                  {/* Layover Information */}
+                  {trip.totalLayoverDuration && trip.totalLayoverDuration !== "0h 0m" && (
+                    <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                      <FlightLandIcon fontSize="small" color="error" />
+                      <Typography variant="caption" color="error">
+                        Layover: {trip.totalLayoverDuration}
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              ))}
 
               <Divider sx={{ my: 2 }} />
-
+              {/* Baggage Information */}
+              <Typography variant="body2" fontWeight={500} mb={1}>
+                Baggage Allowance
+              </Typography>
+              <Stack spacing={0.5} sx={{ mb: 2 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <LuggageIcon fontSize="small" color="action" />
+                  <Typography variant="caption">
+                    Cabin: 8 kg / Adult
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <LuggageIcon fontSize="small" color="action" />
+                  <Typography variant="caption">
+                    Check-in: 23 kg / Adult
+                  </Typography>
+                </Stack>
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+              {/* Passenger and Pricing Summary */}
               <Typography variant="body2" color="text.secondary">
                 Passengers: {passengers.length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Price per Passenger: ₹{parseFloat(flight.totalPrice).toFixed(2)}
               </Typography>
-
               <Divider sx={{ my: 2 }} />
-
               <Typography variant="subtitle1" fontWeight={600}>
                 Total: ₹{(parseFloat(flight.totalPrice) * passengers.length).toFixed(2)}
               </Typography>
             </Box>
-
             <Button
               variant="contained"
               color="primary"

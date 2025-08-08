@@ -6,10 +6,10 @@ import {
   Paper,
   Grid,
   Stack,
-  Divider,
   Button,
   Chip,
   Container,
+  Divider,
 } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
@@ -27,27 +27,32 @@ const BookingSuccess: React.FC = () => {
       navigate("/");
       return;
     }
-
-    // Custom confetti animation
-    const confettiColors = ["#2c39e8", "#1f2ac4", "#10b981", "#e0f2f1", "#2563eb", "#fbbf24"];
+    const confettiColors = [
+      "#2c39e8",
+      "#1f2ac4",
+      "#10b981",
+      "#e0f2f1",
+      "#2563eb",
+      "#fbbf24",
+    ];
     const confettiContainer = confettiRef.current;
     if (!confettiContainer) return;
-
     for (let i = 0; i < 40; i++) {
       const conf = document.createElement("div");
       conf.style.position = "absolute";
       conf.style.left = Math.random() * 100 + "vw";
-      conf.style.width = "12px";
-      conf.style.height = "12px";
+      conf.style.width = "10px"; // SMALLER confetti
+      conf.style.height = "10px"; // SMALLER confetti
       conf.style.background = confettiColors[i % confettiColors.length];
       conf.style.opacity = "0.88";
       conf.style.borderRadius = "2px";
       conf.style.top = "-40px";
       conf.style.transform = `rotate(${Math.random() * 50 - 25}deg)`;
-      conf.style.animation = `fallConfetti 1.6s ${(Math.random() * 1.1).toFixed(2)}s cubic-bezier(.62,.63,0,1) forwards`;
+      conf.style.animation = `fallConfetti 1.6s ${(Math.random() * 1.1).toFixed(
+        2
+      )}s cubic-bezier(.62,.63,0,1) forwards`;
       confettiContainer.appendChild(conf);
     }
-
     return () => {
       if (confettiContainer) confettiContainer.innerHTML = "";
     };
@@ -55,256 +60,218 @@ const BookingSuccess: React.FC = () => {
 
   if (!data.orderId) return null;
 
-  const traveler = data.travelers[0];
-  const flightOffer = data.flightOffer;
-  const trip = flightOffer.trips[0];
+  const traveler = data.travelers?.[0] || {};
+  const flightOffer = data.flightOffer || {};
+  const trip = flightOffer.trips?.[0] || {};
+  const legs = trip.legs || [];
 
   return (
-    <>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f8fafc", position: "relative" }}>
+      {/* Confetti Layer */}
       <Box
+        ref={confettiRef}
         sx={{
+          pointerEvents: "none",
           position: "fixed",
           inset: 0,
-          bgcolor: "rgba(0, 0, 0, 0.4)",
           zIndex: 50,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 2,
         }}
-      >
-        {/* Confetti Layer */}
-        <Box
-          ref={confettiRef}
-          sx={{
-            pointerEvents: "none",
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-          }}
-        />
+      />
 
-        {/* Modal Content */}
+      <Container maxWidth="sm" sx={{ py: { xs: 3, sm: 6 } }}>
         <Paper
           sx={{
-            position: "relative",
-            zIndex: 60,
+            p: { xs: 2, sm: 4 },
             borderRadius: 4,
-            p: 4,
-            maxWidth: 600,
-            width: "100%",
-            maxHeight: "90vh",
-            overflow: "auto",
-            textAlign: "center",
-            animation: "fadeInPop 0.5s cubic-bezier(.23,1.09,.59,.89) forwards",
+            border: "1px solid #e2e8f0",
+            boxShadow: "none",
+            bgcolor: "#fff",
           }}
         >
-          {/* Animated Checkmark */}
-          <Box sx={{ mb: 3 }}>
-            <Box
-              component="svg"
-              width="90"
-              height="90"
-              viewBox="0 0 90 90"
-              fill="none"
-              sx={{
-                mx: "auto",
-                animation: "checkPop .58s cubic-bezier(.23,1.09,.59,.89) .11s both",
-              }}
-            >
-              <circle cx="45" cy="45" r="45" fill="#10b981" opacity="0.18" />
-              <circle
-                cx="45"
-                cy="45"
-                r="38"
-                stroke="#10b981"
-                strokeWidth="4"
-                fill="white"
-              />
-              <path
-                d="M28 49L41 62L62 35"
-                stroke="#10b981"
-                strokeWidth="5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <animate
-                  attributeName="stroke-dasharray"
-                  from="0,40"
-                  to="40,0"
-                  dur="0.6s"
-                  fill="freeze"
-                />
-              </path>
+          <Stack spacing={2}>
+            {/* Small Tick Icon and Header */}
+            <Box sx={{ textAlign: "center", mb: 1 }}>
+<Box
+  component="svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  sx={{
+    mx: "auto",
+    animation: "checkPop .58s cubic-bezier(.23,1.09,.59,.89) .11s both",
+    display: "block",
+  }}
+>
+  <circle cx="12" cy="12" r="12" fill="#10b981" opacity="0.18" />
+  <circle
+    cx="12"
+    cy="12"
+    r="9"
+    stroke="#10b981"
+    strokeWidth="1.5"
+    fill="white"
+  />
+  <path
+    d="M7 12L10 15L17 8"
+    stroke="#10b981"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <animate
+      attributeName="stroke-dasharray"
+      from="0,20"
+      to="20,0"
+      dur="0.5s"
+      fill="freeze"
+    />
+  </path>
+</Box>
+
+              <Typography variant="h5" fontWeight={700} color="#10b981" sx={{ mb: 1, mt: 1 }}>
+                Flight Booked! ✈️
+              </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Your flight has been successfully booked. 🎉
+              </Typography>
             </Box>
-          </Box>
 
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: "#10b981",
-              mb: 1,
-              animation: "titlePopIn .8s cubic-bezier(.23,1.09,.59,.89) .15s forwards",
-              opacity: 0,
-            }}
-          >
-            Flight Booked! ✈️
-          </Typography>
-
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Your flight has been successfully booked. 🎉
-          </Typography>
-
-          {/* Order ID */}
-          <Paper
-            sx={{
-              bgcolor: "#f5f7fa",
-              border: "1px solid #e0f2f1",
-              borderRadius: 2,
-              p: 2,
-              mb: 3,
-              animation: "fadeInPop 0.5s cubic-bezier(.23,1.09,.59,.89) 0.3s forwards",
-              opacity: 0,
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" display="block">
-              Your Booking Reference
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: "#2c39e8",
-                letterSpacing: 1,
-                wordBreak: "break-all",
-              }}
-            >
-              {decodeURIComponent(data.orderId)}
-            </Typography>
-          </Paper>
-
-          {/* Flight Details */}
-          <Stack spacing={2} textAlign="left">
-            {/* Traveler Info */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight={600} gutterBottom>
-                <PersonIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Passenger Details
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Booking Reference
               </Typography>
-              <Grid container spacing={1}>
-                <Grid item xs={12}>
-                  <Typography>
-                    <strong>Name:</strong> {traveler.firstName} {traveler.lastName}
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  color: "#2c39e8",
+                  letterSpacing: 2,
+                  wordBreak: "break-all",
+                  mt: 0.5,
+                  mb: 1,
+                }}
+              >
+                {data.orderId ? decodeURIComponent(data.orderId) : "N/A"}
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 1 }} />
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography variant="h6" fontWeight={600} mb={1}>
+                    <PersonIcon sx={{ mr: 1, verticalAlign: "middle", color: "#2c39e8" }} />
+                    Passenger Details
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography>
-                    <strong>DOB:</strong> {traveler.dateOfBirth}
+                  <Typography variant="body2">
+                    <strong>Name:</strong> {traveler.firstName || ''} {traveler.lastName || ''}
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography>
-                    <strong>Gender:</strong> {traveler.gender}
+                  <Typography variant="body2">
+                    <strong>DOB:</strong> {traveler.dateOfBirth || 'N/A'}
                   </Typography>
-                </Grid>
-                {traveler.phones[0] && (
-                  <Grid item xs={12}>
-                    <Typography>
+                  <Typography variant="body2">
+                    <strong>Gender:</strong> {traveler.gender || 'N/A'}
+                  </Typography>
+                  {traveler.phones?.[0] && (
+                    <Typography variant="body2">
                       <PhoneIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      +{traveler.phones[0].countryCallingCode} {traveler.phones[0].number}
+                      +{traveler.phones.countryCallingCode || ''} {traveler.phones.number || ''}
                     </Typography>
-                  </Grid>
-                )}
+                  )}
+                </Box>
               </Grid>
-            </Paper>
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography variant="h6" fontWeight={600} mb={1}>
+                    <FlightTakeoffIcon sx={{ mr: 1, verticalAlign: "middle", color: "#2c39e8" }} />
+                    Flight Information
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>
+                    {trip.from || 'N/A'} → {trip.to || 'N/A'} • {trip.stops === 0 ? "Direct" : `${trip.stops || 0} Stop${(trip.stops || 0) > 1 ? "s" : ""}`}
+                  </Typography>
+                  {legs.map((leg: any, idx: number) => (
+                    <Box key={idx} sx={{ mb: 1, border: "1px solid #e2e8f0", borderRadius: 2, p: 0.5, bgcolor: "#f8fafc" }}>
+                      <Grid container alignItems="center" spacing={1}>
+                        <Grid item xs={12}>
+                          <Chip
+                            label={`${leg.operatingCarrierCode || ''} ${leg.flightNumber || ''}`}
+                            color="primary"
+                            size="small"
+                            sx={{ fontWeight: 600, fontSize: "0.8rem" }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="body2">
+                            <FlightTakeoffIcon sx={{ fontSize: 13, mr: 0.5, color: "#10b981" }} />
+                            <strong>
+                              {leg.departureDateTime
+                                ? new Date(leg.departureDateTime).toLocaleTimeString([], {
+                                    hour: "2-digit", minute: "2-digit",
+                                  })
+                                : 'N/A'}
+                            </strong> {leg.departureAirport || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="body2">
+                            <FlightLandIcon sx={{ fontSize: 13, mr: 0.5, color: "#f59e0b" }} />
+                            <strong>
+                              {leg.arrivalDateTime
+                                ? new Date(leg.arrivalDateTime).toLocaleTimeString([], {
+                                    hour: "2-digit", minute: "2-digit",
+                                  })
+                                : 'N/A'}
+                            </strong> {leg.arrivalAirport || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          {leg.layoverAfter && (
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Layover:</strong> {leg.layoverAfter}
+                            </Typography>
+                          )}
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                </Box>
+              </Grid>
+            </Grid>
 
-            {/* Flight Info */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight={600} gutterBottom>
-                <FlightTakeoffIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Flight Information
+            <Divider sx={{ my: 2 }} />
+
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" fontWeight={600}>
+                Total Paid
               </Typography>
-              
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {trip.from} → {trip.to} • {trip.stops === 0 ? "Direct" : `${trip.stops} Stop${trip.stops > 1 ? "s" : ""}`}
+              <Typography variant="h5" fontWeight={700} color="#10b981">
+                ₹{flightOffer.totalPrice || "N/A"}
               </Typography>
+            </Stack>
 
-              <Stack spacing={1}>
-                {trip.legs.map((leg: any, idx: number) => (
-                  <Box key={idx}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item xs={3}>
-                        <Chip
-                          label={`${leg.operatingCarrierCode} ${leg.flightNumber}`}
-                          size="small"
-                          color="primary"
-                        />
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Typography variant="body2">
-                          <FlightTakeoffIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                          {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} {leg.departureAirport}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Typography variant="body2">
-                          <FlightLandIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                          {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} {leg.arrivalAirport}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={1}>
-                        <Typography variant="caption">{leg.duration}</Typography>
-                      </Grid>
-                    </Grid>
-                    {leg.layoverAfter && (
-                      <Typography variant="caption" color="text.secondary">
-                        Layover: {leg.layoverAfter}
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
-              </Stack>
-            </Paper>
-
-            {/* Price */}
-            <Paper
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: "#e0f2f1",
-                border: "1px solid #b2dfdb",
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6" fontWeight={600}>
-                  Total Paid
-                </Typography>
-                <Typography variant="h5" fontWeight={700} color="#10b981">
-                  ₹{flightOffer.totalPrice}
-                </Typography>
-              </Stack>
-            </Paper>
-          </Stack>
-
-          {/* Actions */}
-          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-            <Button
-              variant="outlined"
-              onClick={() => navigate("/")}
-              sx={{ borderRadius: 2 }}
-            >
-              Book Another Flight
-            </Button>
+            <Box sx={{ textAlign: "center", pt: 1 }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate("/")}
+                sx={{
+                  borderRadius: 3,
+                  px: 3,
+                  py: 1,
+                  fontSize: "1.05rem",
+                  fontWeight: 600,
+                  bgcolor: "#2c39e8",
+                  "&:hover": { bgcolor: "#1f2ac4" },
+                }}
+              >
+                Book Another Flight
+              </Button>
+            </Box>
           </Stack>
         </Paper>
-      </Box>
+      </Container>
 
       {/* CSS Animations */}
       <style>
@@ -317,8 +284,8 @@ const BookingSuccess: React.FC = () => {
           }
         }
         @keyframes fadeInPop {
-          0% { opacity: 0; transform: scale(0.7);}
-          100% { opacity: 1; transform: scale(1);}
+          0% { opacity: 0; transform: translateY(20px);}
+          100% { opacity: 1; transform: translateY(0);}
         }
         @keyframes titlePopIn {
           from {opacity:0; transform: scale(0.85);}
@@ -331,7 +298,7 @@ const BookingSuccess: React.FC = () => {
         }
         `}
       </style>
-    </>
+    </Box>
   );
 };
 
