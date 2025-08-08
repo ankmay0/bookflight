@@ -397,14 +397,14 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
             </Typography>
             <Box mb={2} sx={{ flexGrow: 1 }}>
               {/* Flight Details Summary */}
-              <Typography
+              {/* <Typography
                 variant="h6"
                 fontWeight={600}
                 color="primary"
                 sx={{ fontSize: "1.1rem", mb: 1 }}
               >
                 {flight.trips[0].from} → {flight.trips[flight.trips.length - 1].to}
-              </Typography>
+              </Typography> */}
 
               <Typography variant="body2" color="text.secondary" mb={2}>
                 {new Date(flight.trips[0].legs.departureDateTime).toLocaleDateString([], {
