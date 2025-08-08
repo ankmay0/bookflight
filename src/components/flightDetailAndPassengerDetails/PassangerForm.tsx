@@ -365,7 +365,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           </Paper>
         </Grid>
 
-        {/* Booking Summary Section with full flight details and no scroll bar */}
+        {/* Booking Summary Section with full flight details */}
         <Grid
           item
           xs={12}
@@ -374,9 +374,6 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
             position: { md: "sticky" },
             top: { md: 20 },
             alignSelf: { md: "flex-start" },
-            height: "auto",
-            minHeight: { md: "calc(100vh - 40px)" },
-            maxHeight: "none",
           }}
         >
           <Paper
@@ -387,10 +384,6 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               bgcolor: "#fff",
               display: "flex",
               flexDirection: "column",
-              height: "auto",
-              minHeight: { md: "calc(100vh - 40px)" },
-              maxHeight: "none",
-              // Remove overflow styling to eliminate scroll bar
             }}
           >
             <Typography
@@ -414,13 +407,13 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               </Typography>
 
               <Typography variant="body2" color="text.secondary" mb={2}>
-                {new Date(flight.trips[0].legs[0].departureDateTime).toLocaleDateString([], {
+                {new Date(flight.trips[0].legs.departureDateTime).toLocaleDateString([], {
                   weekday: "short",
                   month: "short",
                   day: "numeric",
                 })}{" "}
                 • {flight.trips[0].stops} stop
-                {flight.trips[0].stops !== 1 ? "s" : ""} • {flight.trips[0].totalFlightDuration}
+                {flight.trips.stops !== 1 ? "s" : ""} • {flight.trips.totalFlightDuration}
               </Typography>
 
               {flight.trips.map((trip: any, tripIdx: number) => (
