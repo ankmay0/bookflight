@@ -12,7 +12,13 @@ import {
   Card,
   CardContent,
   Avatar,
-  Stack
+  Stack,
+  Chip,
+  Alert,
+  IconButton,
+  Fade,
+  useTheme,
+  alpha
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
@@ -21,6 +27,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import EventIcon from '@mui/icons-material/Event';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
+import PhoneIcon from '@mui/icons-material/Phone';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import FlightIcon from '@mui/icons-material/Flight';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 interface Traveler {
   id: string;
@@ -84,6 +95,7 @@ interface BookingData {
 }
 
 const ManageReservation: React.FC = () => {
+  const theme = useTheme();
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
@@ -91,10 +103,17 @@ const ManageReservation: React.FC = () => {
 
   const formatDateTime = (dateTime: string) => {
     const dateObj = new Date(dateTime);
-    return dateObj.toLocaleString('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
+    return {
+      date: dateObj.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: dateObj.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    };
   };
 
   const handleSearch = async () => {
@@ -110,161 +129,395 @@ const ManageReservation: React.FC = () => {
       const data: BookingData = await res.json();
       setBookingData(data);
     } catch (err) {
-      setError('Could not fetch booking details.');
+      setError('Could not fetch booking details. Please check your booking ID and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f7f8fa', p: 3 }}>
-      {/* Header */}
-      <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1} color="primary">
-        Manage Your Booking
-      </Typography>
-      <Typography variant="body1" textAlign="center" mb={4} color="text.secondary">
-        View your itinerary, passenger details, and flight information.
-      </Typography>
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
-      {/* Search Card */}
-      <Paper elevation={2} sx={{ p: 3, borderRadius: 2, maxWidth: 700, mx: 'auto', mb: 4 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={9}>
+  return (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      background: 'white',
+      py: 4,
+      px: { xs: 2, sm: 3 }
+    }}>
+      {/* Hero Section */}
+      <Box textAlign="center" mb={6}>
+        <FlightIcon sx={{ fontSize: 48, color: 'black', mb: 2 }} />
+        <Typography 
+          variant="h3" 
+          fontWeight="bold" 
+          color="black" 
+          mb={1}
+          sx={{ fontSize: { xs: '2rem', md: '3rem' } }}
+        >
+          Manage Your Booking
+        </Typography>
+        <Typography 
+          variant="h6" 
+          color="black" 
+          fontWeight={300}
+          sx={{ maxWidth: 600, mx: 'auto' }}
+        >
+          Enter your booking ID to view your itinerary and passenger details
+        </Typography>
+      </Box>
+
+      {/* Search Section */}
+      <Paper 
+        elevation={6} 
+        sx={{ 
+          p: 4, 
+          borderRadius: 4, 
+          maxWidth: 800, 
+          mx: 'auto', 
+          mb: 4,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={8}>
             <TextField
               fullWidth
-              label="Booking ID"
+              label="Enter Booking ID"
               variant="outlined"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'white',
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon color="action" />
+                    <SearchIcon color="primary" />
                   </InputAdornment>
                 ),
               }}
             />
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12} sm={4}>
             <Button
               variant="contained"
-              color="primary"
               fullWidth
-              sx={{ height: '100%' }}
+              size="large"
               onClick={handleSearch}
+              disabled={loading}
+              sx={{ 
+                height: 56,
+                borderRadius: 2,
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                boxShadow: '0 3px 15px rgba(33, 203, 243, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
             >
-              Search
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Search'}
             </Button>
           </Grid>
         </Grid>
       </Paper>
 
-      {loading && (
-        <Box textAlign="center" mt={4}>
-          <CircularProgress />
-        </Box>
-      )}
-
+      {/* Error State */}
       {error && (
-        <Typography color="error" textAlign="center" mt={2}>
-          {error}
-        </Typography>
+        <Fade in={true}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              maxWidth: 800, 
+              mx: 'auto', 
+              mb: 4,
+              borderRadius: 2
+            }}
+            action={
+              <IconButton
+                color="inherit"
+                size="small"
+                onClick={() => setError('')}
+              >
+                <RefreshIcon />
+              </IconButton>
+            }
+          >
+            {error}
+          </Alert>
+        </Fade>
       )}
 
-      {bookingData && (
-        <Box maxWidth={1000} mx="auto">
-          {/* Booking Summary */}
-          <Paper elevation={2} sx={{ p: 3, borderRadius: 2, mb: 4, backgroundColor: 'white' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Booking Summary
-            </Typography>
-            <Stack direction="row" spacing={3} flexWrap="wrap">
-              <Typography>
-                <AttachMoneyIcon fontSize="small" /> {bookingData.flightOffer.currencyCode} {bookingData.flightOffer.totalPrice}
-              </Typography>
-              <Typography>
-                <AirlineSeatReclineNormalIcon fontSize="small" /> Travelers: {bookingData.flightOffer.totalTravelers}
-              </Typography>
-              <Typography>Order ID: {bookingData.orderId}</Typography>
-            </Stack>
-          </Paper>
-
-          {/* Passenger Info */}
-          {/* Passenger Info */}
-          {/* Passenger Info */}
-          <Typography variant="h6" fontWeight="bold" mb={2}>
-            Passenger Information
+      {/* Loading State */}
+      {loading && (
+        <Box textAlign="center" py={4}>
+          <CircularProgress size={40} sx={{ color: 'white' }} />
+          <Typography color="white" mt={2}>
+            Searching for your booking...
           </Typography>
-
-          <Card elevation={1} sx={{ borderRadius: 2, mb: 4 }}>
-            <CardContent>
-              {bookingData.travelers.map((traveler, index) => (
-                <React.Fragment key={traveler.id}>
-                  <Stack direction="row" alignItems="center" spacing={2} mb={1}>
-                    <Avatar sx={{ bgcolor: 'primary.main' }}>
-                      <PersonIcon />
-                    </Avatar>
-                    <Box>
-                      <Typography fontWeight="bold">
-                        {traveler.firstName} {traveler.lastName} ({traveler.gender})
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Date of Birth: {traveler.dateOfBirth}
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  <Grid container spacing={2} mb={1}>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2">
-                        <strong>Phone:</strong> +{traveler.phones[0]?.countryCallingCode} {traveler.phones[0]?.number}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2">
-                        <strong>Document:</strong> {traveler.documents[0]?.documentType} — {traveler.documents[0]?.number}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-
-                  {index < bookingData.travelers.length - 1 && <Divider sx={{ my: 2 }} />}
-                </React.Fragment>
-              ))}
-            </CardContent>
-          </Card>
-
-
-
-
-          {/* Flight Itinerary */}
-          <Typography variant="h6" fontWeight="bold" mb={2}>
-            Flight Itinerary
-          </Typography>
-          {bookingData.flightOffer.trips.map((trip, idx) => (
-            <Card key={idx} elevation={1} sx={{ borderRadius: 2, mb: 3, p: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                {trip.from} → {trip.to} | Duration: {trip.totalFlightDuration}
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              {trip.legs.map((leg) => (
-                <Box key={leg.legNo} sx={{ mb: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <FlightTakeoffIcon color="primary" />
-                    <Typography>
-                      Depart: {leg.departureAirport} T{leg.departureTerminal} — {formatDateTime(leg.departureDateTime)}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <FlightLandIcon color="secondary" />
-                    <Typography>
-                      Arrive: {leg.arrivalAirport} T{leg.arrivalTerminal} — {formatDateTime(leg.arrivalDateTime)}
-                    </Typography>
-                  </Stack>
-                </Box>
-              ))}
-            </Card>
-          ))}
         </Box>
+      )}
+
+      {/* Booking Results */}
+      {bookingData && (
+        <Fade in={true}>
+          <Box maxWidth={1200} mx="auto">
+            {/* Booking Summary Card */}
+            <Card 
+              elevation={6} 
+              sx={{ 
+                borderRadius: 3, 
+                mb: 4, 
+                background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                color: 'white',
+                overflow: 'hidden',
+                position: 'relative'
+              }}
+            >
+              <CardContent sx={{ p: 4 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h5" fontWeight="bold">
+                    Booking Confirmed
+                  </Typography>
+                  <Chip 
+                    label="CONFIRMED" 
+                    sx={{ 
+                      bgcolor: 'rgba(255, 255, 255, 0.2)', 
+                      color: 'white',
+                      fontWeight: 'bold'
+                    }} 
+                  />
+                </Stack>
+                
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <AttachMoneyIcon />
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>Total Price</Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                          {bookingData.flightOffer.currencyCode} {bookingData.flightOffer.totalPrice}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <AirlineSeatReclineNormalIcon />
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>Travelers</Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                          {bookingData.flightOffer.totalTravelers}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={12} md={6}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <DescriptionIcon />
+                      <Box>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>Booking ID</Typography>
+                        <Typography variant="h6" fontWeight="bold" sx={{ wordBreak: 'break-all' }}>
+                          {bookingData.orderId}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Passenger Information */}
+            <Card elevation={4} sx={{ borderRadius: 3, mb: 4 }}>
+              <CardContent sx={{ p: 4 }}>
+                <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+                  <PersonIcon color="primary" sx={{ fontSize: 28 }} />
+                  <Typography variant="h5" fontWeight="bold" color="primary">
+                    Passenger Information
+                  </Typography>
+                </Stack>
+
+                {bookingData.travelers.map((traveler, index) => (
+                  <React.Fragment key={traveler.id}>
+                    <Paper 
+                      elevation={1} 
+                      sx={{ 
+                        p: 3, 
+                        mb: index < bookingData.travelers.length - 1 ? 3 : 0,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.primary.main, 0.02),
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={3} mb={2}>
+
+                        <Box flex={1}>
+                          <Typography variant="h6" fontWeight="bold" gutterBottom>
+                            {traveler.firstName} {traveler.lastName}
+                          </Typography>
+                          <Stack direction="row" spacing={2} flexWrap="wrap">
+                            <Chip 
+                              icon={<PersonIcon />} 
+                              label={traveler.gender} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                            <Chip 
+                              icon={<EventIcon />} 
+                              label={traveler.dateOfBirth} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                          </Stack>
+                        </Box>
+                      </Stack>
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <PhoneIcon color="action" fontSize="small" />
+                            <Typography variant="body2">
+                              <strong>Phone:</strong> +{traveler.phones[0]?.countryCallingCode} {traveler.phones[0]?.number}
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <DescriptionIcon color="action" fontSize="small" />
+                            <Typography variant="body2">
+                              <strong>Document:</strong> {traveler.documents[0]?.documentType} — {traveler.documents[0]?.number}
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  </React.Fragment>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Flight Itinerary */}
+            <Card elevation={4} sx={{ borderRadius: 3 }}>
+              <CardContent sx={{ p: 4 }}>
+                <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+                  <FlightIcon color="primary" sx={{ fontSize: 28 }} />
+                  <Typography variant="h5" fontWeight="bold" color="primary">
+                    Flight Itinerary
+                  </Typography>
+                </Stack>
+
+                {bookingData.flightOffer.trips.map((trip, idx) => (
+                  <Paper 
+                    key={idx} 
+                    elevation={2} 
+                    sx={{ 
+                      p: 3, 
+                      mb: idx < bookingData.flightOffer.trips.length - 1 ? 3 : 0,
+                      borderRadius: 2,
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                      background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.02) 0%, rgba(156, 39, 176, 0.02) 100%)'
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6" fontWeight="bold" color="primary">
+                        {trip.from} → {trip.to}
+                      </Typography>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <AccessTimeIcon fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {trip.totalFlightDuration}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                    
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    {trip.legs.map((leg, legIndex) => {
+                      const departureTime = formatDateTime(leg.departureDateTime);
+                      const arrivalTime = formatDateTime(leg.arrivalDateTime);
+                      
+                      return (
+                        <Box key={leg.legNo} sx={{ mb: legIndex < trip.legs.length - 1 ? 3 : 0 }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <Stack direction="row" alignItems="center" spacing={2}>
+                                <FlightTakeoffIcon color="primary" />
+                                <Box>
+                                  <Typography variant="subtitle2" fontWeight="bold">
+                                    Departure
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {leg.departureAirport} Terminal {leg.departureTerminal}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {departureTime.date} • {departureTime.time}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Stack direction="row" alignItems="center" spacing={2}>
+                                <FlightLandIcon color="secondary" />
+                                <Box>
+                                  <Typography variant="subtitle2" fontWeight="bold">
+                                    Arrival
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {leg.arrivalAirport} Terminal {leg.arrivalTerminal}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {arrivalTime.date} • {arrivalTime.time}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+                            </Grid>
+                          </Grid>
+                          
+                          <Stack direction="row" spacing={2} mt={2} flexWrap="wrap">
+                            <Chip 
+                              label={`Flight ${leg.flightNumber}`} 
+                              size="small" 
+                              color="primary"
+                              variant="outlined"
+                            />
+                            <Chip 
+                              label={`${leg.operatingCarrierCode} • ${leg.aircraftCode}`} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                            <Chip 
+                              label={leg.duration} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                          </Stack>
+                          
+                          {legIndex < trip.legs.length - 1 && (
+                            <Divider sx={{ mt: 2 }} />
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Paper>
+                ))}
+              </CardContent>
+            </Card>
+          </Box>
+        </Fade>
       )}
     </Box>
   );
