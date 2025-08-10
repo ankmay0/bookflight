@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Box, Container, Typography, Button } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import axios from "axios";
 
 const ReviewConfirmation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { passengers = [], contact = {}, flight } = location.state as any ?? {};
+  const [error, setError] = useState<string | null>(null);
+  const { passengers = [], contact = {}, flight } = location.state ?? {};
 
   if (!flight || passengers.length === 0) {
     return (
-      <Typography align="center" sx={{ mt: 12, fontWeight: 500, color: "#bbb" }}>
+      <Typography align="center" sx={{ mt: 12, fontWeight: 500, color: "text.secondary" }}>
         Missing booking details. Please start again.
       </Typography>
     );
@@ -19,44 +27,68 @@ const ReviewConfirmation: React.FC = () => {
 
   const handleConfirmBooking = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const raw = flight.flightOffer ?? flight.pricingAdditionalInfo ?? null;
-      if (!raw) {
-        alert("flightOffer missing – cannot book");
+      const flightOffer = flight.flightOffer ?? flight.pricingAdditionalInfo;
+      if (!flightOffer) {
+        setError("Flight offer data is missing. Please try again.");
         setLoading(false);
         return;
       }
-      const travelers = passengers.map((p: any, idx: number) => ({
-        id: (idx + 1).toString(),
-        firstName: p.firstName,
-        lastName: p.lastName,
-        dateOfBirth: p.dob,
-        gender: p.gender || "MALE",
-        email: contact.email,
-        phones: [{ deviceType: "MOBILE", countryCallingCode: "91", number: contact.phone }],
-        documents: [{
-          documentType: "PASSPORT",
-          number: p.passport || "UNKNOWN",
-          issuanceDate: "2015-07-22",
-          expiryDate: "2035-11-30",
-          issuanceCountry: "IN",
-          validityCountry: "IN",
-          nationality: "IN",
-          birthPlace: "Delhi",
-          issuanceLocation: "Delhi",
-          holder: true,
-        }],
-      }));
 
-      const flightOfferStr = typeof raw === "string" ? raw : JSON.stringify(raw);
+      const travelers = passengers.map((p: any, idx: number) => {
+        const traveler = {
+          id: (idx + 1).toString(),
+          firstName: p.firstName,
+          lastName: p.lastName,
+          dateOfBirth: p.dob,
+          gender: p.gender.toUpperCase(), // Map "Male" to "MALE", "Female" to "FEMALE", etc.
+        } as any;
+
+        // Assign contact info only to primary traveler (index 0)
+        if (idx === 0) {
+          traveler.email = contact.email;
+          traveler.phones = [
+            {
+              deviceType: "MOBILE",
+              countryCallingCode: contact.countryCode.replace("+", ""), // Remove "+" from country code
+              number: contact.phone,
+            },
+          ];
+        }
+
+        // Include passport only if provided
+        if (p.passport) {
+          traveler.documents = [
+            {
+              documentType: "PASSPORT",
+              number: p.passport,
+              // Avoid hardcoding; these should come from user input or API defaults
+              issuanceDate: "2020-01-01", // Placeholder; ideally collect from form
+              expiryDate: "2030-01-01", // Placeholder
+              issuanceCountry: "IN", // Placeholder
+              validityCountry: "IN", // Placeholder
+              nationality: "IN", // Placeholder
+              birthPlace: "Unknown", // Placeholder
+              issuanceLocation: "Unknown", // Placeholder
+              holder: true,
+            },
+          ];
+        }
+
+        return traveler;
+      });
+
+      const flightOfferStr = typeof flightOffer === "string" ? flightOffer : JSON.stringify(flightOffer);
       const { data: bookingData } = await axios.post(
         "http://localhost:8080/booking/flight-order",
         { flightOffer: flightOfferStr, travelers }
       );
       navigate("/booking-success", { state: bookingData });
     } catch (err: any) {
-      alert(
-        `Booking failed: ${err?.response?.data ? JSON.stringify(err.response.data) : err.message}`
+      setError(
+        err.response?.data?.message ||
+        "Booking failed. Please try again or contact support."
       );
       setLoading(false);
     }
@@ -72,40 +104,48 @@ const ReviewConfirmation: React.FC = () => {
           mx: "auto",
           p: { xs: 2, sm: 4 },
           background: "#fff",
-          borderRadius: 1, // thin radius
-          border: "1px solid #eee", // very thin border
+          borderRadius: 1,
+          border: "1px solid #e0e0e0",
           minHeight: 450,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
       >
-        {/* Title */}
         <Typography variant="h5" fontWeight={700} align="center" sx={{ mb: { xs: 2, sm: 4 } }}>
-          Review & Confirmation
+          Review & Book
         </Typography>
 
         {/* Flight */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle2" fontWeight={700}>
-            {flight.trips[0].from} → {flight.trips.at(-1).to}
+            {flight.trips[0].from} → {flight.trips[flight.trips.length - 1].to}
           </Typography>
           <Typography color="text.secondary" fontWeight={500} sx={{ mb: 0.5 }}>
-            {flight.trips.airline} {flight.trips.flightNumber} &bull; {flight.trips.departureTime}
+            {flight.trips[0].legs[0].operatingCarrierCode} {flight.trips[0].legs[0].flightNumber} •{" "}
+            {new Date(flight.trips[0].legs[0].departureDateTime).toLocaleDateString([], {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}{" "}
+            • {flight.trips[0].stops} stop{flight.trips[0].stops !== 1 ? "s" : ""}
           </Typography>
           <Typography color="primary" fontWeight={700}>
             ₹{flight.totalPrice}{" "}
-            <Typography variant="caption" color="text.secondary" fontWeight={400}>/passenger</Typography>
+            <Typography component="span" variant="caption" color="text.secondary" fontWeight={400}>
+              /traveler
+            </Typography>
           </Typography>
         </Box>
 
         {/* Passengers */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-            Passengers
+            Travelers
           </Typography>
           {passengers.map((p: any, idx: number) => (
             <Typography key={idx} sx={{ color: "#555", fontWeight: 500, mb: 0.5 }}>
               {p.title} {p.firstName} {p.lastName}{" "}
               <Typography component="span" variant="caption" color="text.secondary">
-                {p.dob}
+                {p.dob} • {p.gender}
               </Typography>
             </Typography>
           ))}
@@ -114,20 +154,20 @@ const ReviewConfirmation: React.FC = () => {
         {/* Contact */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-            Contact
+            Contact Information
           </Typography>
           <Typography color="text.secondary" fontSize={15}>
             {contact.email}
           </Typography>
           <Typography color="text.secondary" fontSize={15}>
-            {contact.phone}
+            {contact.countryCode} {contact.phone}
           </Typography>
         </Box>
 
         {/* Total */}
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="subtitle2" fontWeight={700}>
-            Total
+            Total ({passengers.length} traveler{passengers.length !== 1 ? "s" : ""})
           </Typography>
           <Typography variant="h6" color="primary" fontWeight={700}>
             ₹{total}
@@ -148,16 +188,24 @@ const ReviewConfirmation: React.FC = () => {
             fontWeight: 700,
             boxShadow: "none",
             background: "#30476e",
-            ':hover': { background: "#243455" },
+            "&:hover": { background: "#243455" },
           }}
         >
-          {loading ? (
-            <Typography>Confirming…</Typography>
-          ) : (
-            "Confirm Booking"
-          )}
+          {loading ? "Confirming…" : "Confirm Booking"}
         </Button>
       </Box>
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

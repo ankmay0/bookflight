@@ -14,6 +14,7 @@ import {
   Select,
   Chip,
   Stack,
+  Autocomplete,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -30,18 +31,27 @@ interface PassengerFormProps {
   passengersNumber?: number;
 }
 
+const countryCodes = [
+  { code: "+1", label: "United States (+1)" },
+  { code: "+44", label: "United Kingdom (+44)" },
+  { code: "+91", label: "India (+91)" },
+  { code: "+86", label: "China (+86)" },
+  { code: "+81", label: "Japan (+81)" },
+  // Add more country codes as needed
+];
+
 const PassengerForm: React.FC<PassengerFormProps> = ({
   flight,
   navigate,
   passengersNumber,
 }) => {
   const [passengers, setPassengers] = useState([
-    { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
+    { title: "Mr.", firstName: "", lastName: "", dob: "", gender: "", passport: "" },
   ]);
-  const [contact, setContact] = useState({ email: "", phone: "" });
+  const [contact, setContact] = useState({ email: "", phone: "", countryCode: "+1" });
   const [errors, setErrors] = useState({
-    passengers: [{ firstName: "", lastName: "", dob: "" }],
-    contact: { email: "", phone: "" },
+    passengers: [{ firstName: "", lastName: "", dob: "", gender: "" }],
+    contact: { email: "", phone: "", countryCode: "" },
   });
 
   useEffect(() => {
@@ -51,6 +61,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
         firstName: "",
         lastName: "",
         dob: "",
+        gender: "",
         passport: "",
       }));
       setPassengers(initialPassengers);
@@ -59,32 +70,35 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           firstName: "",
           lastName: "",
           dob: "",
+          gender: "",
         })),
-        contact: { email: "", phone: "" },
+        contact: { email: "", phone: "", countryCode: "" },
       });
     }
   }, [passengersNumber]);
 
   const validatePassenger = (passenger: any) => {
-    const newErrors = { firstName: "", lastName: "", dob: "" };
+    const newErrors = { firstName: "", lastName: "", dob: "", gender: "" };
     if (!passenger.firstName) newErrors.firstName = "First name is required";
     if (!passenger.lastName) newErrors.lastName = "Last name is required";
     if (!passenger.dob) newErrors.dob = "Date of birth is required";
+    if (!passenger.gender) newErrors.gender = "Gender is required";
     return newErrors;
   };
 
   const validateContact = () => {
-    const newErrors = { email: "", phone: "" };
+    const newErrors = { email: "", phone: "", countryCode: "" };
     if (!contact.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(contact.email))
       newErrors.email = "Invalid email format";
     if (!contact.phone) newErrors.phone = "Phone number is required";
+    if (!contact.countryCode) newErrors.countryCode = "Country code is required";
     return newErrors;
   };
 
   const handlePassengerChange = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string } }
   ) => {
     const updated = [...passengers];
     updated[index][e.target.name as keyof typeof updated[0]] = e.target.value;
@@ -98,11 +112,11 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
   const addPassenger = () => {
     setPassengers((prev) => [
       ...prev,
-      { title: "Mr.", firstName: "", lastName: "", dob: "", passport: "" },
+      { title: "Mr.", firstName: "", lastName: "", dob: "", gender: "", passport: "" },
     ]);
     setErrors((prev) => ({
       ...prev,
-      passengers: [...prev.passengers, { firstName: "", lastName: "", dob: "" }],
+      passengers: [...prev.passengers, { firstName: "", lastName: "", dob: "", gender: "" }],
     }));
   };
 
@@ -120,15 +134,24 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
     setErrors((prev) => ({ ...prev, contact: newErrors }));
   };
 
+  const handleCountryCodeChange = (value: string) => {
+    setContact({ ...contact, countryCode: value });
+    const newErrors = validateContact();
+    setErrors((prev) => ({ ...prev, contact: newErrors }));
+  };
+
   const handleConfirm = () => {
     const passengerErrors = passengers.map((p) => validatePassenger(p));
     const contactErrors = validateContact();
     setErrors({ passengers: passengerErrors, contact: contactErrors });
 
     const hasErrors =
-      passengerErrors.some((p) => p.firstName || p.lastName || p.dob) ||
+      passengerErrors.some((p) => p.firstName || p.lastName || p.dob || p.gender) ||
       contactErrors.email ||
-      contactErrors.phone;
+      contactErrors.phone ||
+      contactErrors.countryCode;
+
+      console.log(passengers);
 
     if (!hasErrors) {
       navigate("/review-confirmation", {
@@ -142,7 +165,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       sx={{
         minHeight: "100vh",
         width: "100vw",
-        bgcolor: "#f5f7fa",
+        bgcolor: "#f4f6f8",
         p: { xs: 2, md: 4 },
         display: "flex",
         flexDirection: "column",
@@ -157,21 +180,21 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
             sx={{
               p: { xs: 2, md: 3 },
               borderRadius: 2,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               bgcolor: "#fff",
             }}
           >
             <Typography
               variant="h5"
-              fontWeight={600}
+              fontWeight={700}
               color="primary"
               gutterBottom
               sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}
             >
-              Passenger Details
+              Traveler Details
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
-              Enter details for all passengers traveling on this flight
+              Please provide details for all travelers as shown on their passports
             </Typography>
 
             {passengers.map((passenger, index) => (
@@ -188,15 +211,15 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                 >
                   <Typography
                     variant="h6"
-                    fontWeight={500}
+                    fontWeight={600}
                     sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }}
                   >
-                    Passenger {index + 1} {index === 0 && "(Primary Contact)"}
+                    Traveler {index + 1} {index === 0 && "(Primary Contact)"}
                   </Typography>
                   {index > 0 && (
                     <IconButton
                       onClick={() => removePassenger(index)}
-                      aria-label="Remove passenger"
+                      aria-label="Remove traveler"
                       color="error"
                     >
                       <DeleteIcon />
@@ -220,6 +243,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                         <MenuItem value="Mr.">Mr.</MenuItem>
                         <MenuItem value="Ms.">Ms.</MenuItem>
                         <MenuItem value="Mrs.">Mrs.</MenuItem>
+                        <MenuItem value="Dr.">Dr.</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -254,6 +278,29 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      error={!!errors.passengers[index].gender}
+                    >
+                      <InputLabel>Gender</InputLabel>
+                      <Select
+                        name="gender"
+                        value={passenger.gender}
+                        onChange={(e) => handlePassengerChange(index, e as any)}
+                        sx={{ borderRadius: 1 }}
+                      >
+                        <MenuItem value="Male">Male</MenuItem>
+                        <MenuItem value="Female">Female</MenuItem>
+                        <MenuItem value="Other">Other</MenuItem>
+                      </Select>
+                      {!!errors.passengers[index].gender && (
+                        <Typography variant="caption" color="error">
+                          {errors.passengers[index].gender}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       label="Date of Birth"
                       name="dob"
@@ -270,7 +317,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12}>
                     <TextField
                       label="Passport Number (Optional)"
                       name="passport"
@@ -301,7 +348,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                 },
               }}
             >
-              Add Another Passenger
+              Add Another Traveler
             </Button>
           </Paper>
 
@@ -311,21 +358,24 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               p: { xs: 2, md: 3 },
               mt: 3,
               borderRadius: 2,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               bgcolor: "#fff",
             }}
           >
             <Typography
               variant="h6"
-              fontWeight={500}
+              fontWeight={600}
               color="primary"
               gutterBottom
               sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
             >
               Contact Information
             </Typography>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              We'll use this to send booking confirmation and updates
+            </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   label="Email Address"
                   name="email"
@@ -343,7 +393,28 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
+                <Autocomplete
+                  options={countryCodes}
+                  getOptionLabel={(option) => option.label}
+                  value={countryCodes.find((c) => c.code === contact.countryCode) || null}
+                  onChange={(event, newValue) => handleCountryCodeChange(newValue?.code || "+1")}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Country Code"
+                      required
+                      error={!!errors.contact.countryCode}
+                      helperText={errors.contact.countryCode}
+                      InputProps={{
+                        ...params.InputProps,
+                        sx: { borderRadius: 1 },
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={8}>
                 <TextField
                   label="Phone Number"
                   name="phone"
@@ -365,7 +436,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           </Paper>
         </Grid>
 
-        {/* Booking Summary Section with full flight details */}
+        {/* Booking Summary Section */}
         <Grid
           item
           xs={12}
@@ -380,7 +451,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
             sx={{
               p: { xs: 2, md: 3 },
               borderRadius: 2,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               bgcolor: "#fff",
               display: "flex",
               flexDirection: "column",
@@ -388,7 +459,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           >
             <Typography
               variant="h6"
-              fontWeight={600}
+              fontWeight={700}
               color="primary"
               gutterBottom
               sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
@@ -396,16 +467,6 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               Booking Summary
             </Typography>
             <Box mb={2} sx={{ flexGrow: 1 }}>
-              {/* Flight Details Summary */}
-              {/* <Typography
-                variant="h6"
-                fontWeight={600}
-                color="primary"
-                sx={{ fontSize: "1.1rem", mb: 1 }}
-              >
-                {flight.trips[0].from} → {flight.trips[flight.trips.length - 1].to}
-              </Typography> */}
-
               <Typography variant="body2" color="text.secondary" mb={2}>
                 {new Date(flight.trips[0].legs.departureDateTime).toLocaleDateString([], {
                   weekday: "short",
@@ -420,10 +481,9 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                 <Box key={tripIdx} mb={2}>
                   {trip.legs.map((leg: any, legIdx: number) => (
                     <Box key={legIdx} mb={2}>
-                      {/* Airline and Flight Number */}
                       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
                         <FlightTakeoffIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" fontWeight={500}>
+                        <Typography variant="body2" fontWeight={600}>
                           {leg.operatingCarrierCode} {leg.flightNumber}
                         </Typography>
                         <Chip
@@ -467,7 +527,6 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                       </Box>
                     </Box>
                   ))}
-                  {/* Layover Information */}
                   {trip.totalLayoverDuration && trip.totalLayoverDuration !== "0h 0m" && (
                     <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                       <FlightLandIcon fontSize="small" color="error" />
@@ -480,8 +539,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               ))}
 
               <Divider sx={{ my: 2 }} />
-              {/* Baggage Information */}
-              <Typography variant="body2" fontWeight={500} mb={1}>
+              <Typography variant="body2" fontWeight={600} mb={1}>
                 Baggage Allowance
               </Typography>
               <Stack spacing={0.5} sx={{ mb: 2 }}>
@@ -499,15 +557,14 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                 </Stack>
               </Stack>
               <Divider sx={{ my: 2 }} />
-              {/* Passenger and Pricing Summary */}
               <Typography variant="body2" color="text.secondary">
-                Passengers: {passengers.length}
+                Travelers: {passengers.length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Price per Passenger: ₹{parseFloat(flight.totalPrice).toFixed(2)}
+                Price per Traveler: ₹{parseFloat(flight.totalPrice).toFixed(2)}
               </Typography>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" fontWeight={600}>
+              <Typography variant="subtitle1" fontWeight={700}>
                 Total: ₹{(parseFloat(flight.totalPrice) * passengers.length).toFixed(2)}
               </Typography>
             </Box>
@@ -517,11 +574,13 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               fullWidth
               onClick={handleConfirm}
               disabled={
-                passengers.some((p) => !p.firstName || !p.lastName || !p.dob) ||
+                passengers.some((p) => !p.firstName || !p.lastName || !p.dob || !p.gender) ||
                 !contact.email ||
                 !contact.phone ||
+                !contact.countryCode ||
                 !!errors.contact.email ||
-                !!errors.contact.phone
+                !!errors.contact.phone ||
+                !!errors.contact.countryCode
               }
               sx={{
                 borderRadius: 1,
