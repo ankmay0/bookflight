@@ -1,50 +1,139 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Grid, Paper, InputAdornment } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Grid,
+  Paper,
+  InputAdornment,
+  CircularProgress,
+  Divider,
+  Card,
+  CardContent,
+  Avatar,
+  Stack
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import FlightLandIcon from '@mui/icons-material/FlightLand';
+import PersonIcon from '@mui/icons-material/Person';
+import EventIcon from '@mui/icons-material/Event';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
+
+interface Traveler {
+  id: string;
+  dateOfBirth: string;
+  gender: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phones: {
+    deviceType: string;
+    countryCallingCode: string;
+    number: string;
+  }[];
+  documents: {
+    number: string;
+    expiryDate: string;
+    issuanceCountry: string;
+    nationality: string;
+    documentType: string;
+    holder: boolean;
+  }[];
+}
+
+interface Leg {
+  legNo: string;
+  flightNumber: string;
+  operatingCarrierCode: string;
+  aircraftCode: string;
+  departureAirport: string;
+  departureTerminal: string;
+  departureDateTime: string;
+  arrivalAirport: string;
+  arrivalTerminal: string;
+  arrivalDateTime: string;
+  duration: string;
+  layoverAfter: string | null;
+}
+
+interface Trip {
+  from: string;
+  to: string;
+  stops: number;
+  totalFlightDuration: string;
+  totalLayoverDuration: string;
+  legs: Leg[];
+}
+
+interface BookingData {
+  orderId: string;
+  travelers: Traveler[];
+  flightOffer: {
+    oneWay: boolean;
+    seatsAvailable: number;
+    currencyCode: string;
+    basePrice: string;
+    totalPrice: string;
+    totalTravelers: number;
+    trips: Trip[];
+    pricingAdditionalInfo: string | null;
+  };
+}
 
 const ManageReservation: React.FC = () => {
-  const [searchText, setSearchText] = useState<string>('');
-  const [departing, setDeparting] = useState<string>('');
-  const [arriving, setArriving] = useState<string>('');
-  const [travelDate, setTravelDate] = useState<string>('');
+  const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
+  const [error, setError] = useState('');
 
-  const handleSearch = () => {
-    console.log({
-      searchText,
-      departing,
-      arriving,
-      travelDate,
+  const formatDateTime = (dateTime: string) => {
+    const dateObj = new Date(dateTime);
+    return dateObj.toLocaleString('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
     });
-    // Add navigation logic or API call here
+  };
+
+  const handleSearch = async () => {
+    if (!searchText.trim()) return;
+    setLoading(true);
+    setError('');
+    setBookingData(null);
+
+    try {
+      const encodedId = encodeURIComponent(searchText);
+      const res = await fetch(`http://localhost:8080/booking/flight-order/${encodedId}`);
+      if (!res.ok) throw new Error('Failed to fetch booking');
+      const data: BookingData = await res.json();
+      setBookingData(data);
+    } catch (err) {
+      setError('Could not fetch booking details.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="100vh"
-      sx={{
-        background: 'linear-gradient(to bottom right, #f0f7ff, #e0e0ff)',
-        padding: 3,
-      }}
-    >
-      <Typography variant="h3" fontWeight="bold" gutterBottom>
-        Check Flight Status
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f7f8fa', p: 3 }}>
+      {/* Header */}
+      <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1} color="primary">
+        Manage Your Booking
       </Typography>
-      <Typography variant="body1" align="center" color="text.secondary" maxWidth="600px" mb={4}>
-        With our flight tracker, you can now track the live status of domestic and international flights.
-        Enter details like PNR number, flight number, travel date and get the status.
+      <Typography variant="body1" textAlign="center" mb={4} color="text.secondary">
+        View your itinerary, passenger details, and flight information.
       </Typography>
 
-      <Paper elevation={3} sx={{ padding: 4, borderRadius: 4, width: '100%', maxWidth: 600 }}>
+      {/* Search Card */}
+      <Paper elevation={2} sx={{ p: 3, borderRadius: 2, maxWidth: 700, mx: 'auto', mb: 4 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid item xs={9}>
             <TextField
               fullWidth
+              label="Booking ID"
               variant="outlined"
-              placeholder="Search by flight number or by PNR"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               InputProps={{
@@ -56,52 +145,127 @@ const ManageReservation: React.FC = () => {
               }}
             />
           </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Departing"
-              value={departing}
-              onChange={(e) => setDeparting(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Arriving"
-              value={arriving}
-              onChange={(e) => setArriving(e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={8}>
-            <TextField
-              fullWidth
-              type="date"
-              variant="outlined"
-              value={travelDate}
-              onChange={(e) => setTravelDate(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <Button
               variant="contained"
               color="primary"
               fullWidth
-              size="large"
-              onClick={handleSearch}
               sx={{ height: '100%' }}
+              onClick={handleSearch}
             >
-              Search Flight
+              Search
             </Button>
           </Grid>
         </Grid>
       </Paper>
+
+      {loading && (
+        <Box textAlign="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && (
+        <Typography color="error" textAlign="center" mt={2}>
+          {error}
+        </Typography>
+      )}
+
+      {bookingData && (
+        <Box maxWidth={1000} mx="auto">
+          {/* Booking Summary */}
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 2, mb: 4, backgroundColor: 'white' }}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Booking Summary
+            </Typography>
+            <Stack direction="row" spacing={3} flexWrap="wrap">
+              <Typography>
+                <AttachMoneyIcon fontSize="small" /> {bookingData.flightOffer.currencyCode} {bookingData.flightOffer.totalPrice}
+              </Typography>
+              <Typography>
+                <AirlineSeatReclineNormalIcon fontSize="small" /> Travelers: {bookingData.flightOffer.totalTravelers}
+              </Typography>
+              <Typography>Order ID: {bookingData.orderId}</Typography>
+            </Stack>
+          </Paper>
+
+          {/* Passenger Info */}
+          {/* Passenger Info */}
+          {/* Passenger Info */}
+          <Typography variant="h6" fontWeight="bold" mb={2}>
+            Passenger Information
+          </Typography>
+
+          <Card elevation={1} sx={{ borderRadius: 2, mb: 4 }}>
+            <CardContent>
+              {bookingData.travelers.map((traveler, index) => (
+                <React.Fragment key={traveler.id}>
+                  <Stack direction="row" alignItems="center" spacing={2} mb={1}>
+                    <Avatar sx={{ bgcolor: 'primary.main' }}>
+                      <PersonIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography fontWeight="bold">
+                        {traveler.firstName} {traveler.lastName} ({traveler.gender})
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Date of Birth: {traveler.dateOfBirth}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Grid container spacing={2} mb={1}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Phone:</strong> +{traveler.phones[0]?.countryCallingCode} {traveler.phones[0]?.number}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2">
+                        <strong>Document:</strong> {traveler.documents[0]?.documentType} — {traveler.documents[0]?.number}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+
+                  {index < bookingData.travelers.length - 1 && <Divider sx={{ my: 2 }} />}
+                </React.Fragment>
+              ))}
+            </CardContent>
+          </Card>
+
+
+
+
+          {/* Flight Itinerary */}
+          <Typography variant="h6" fontWeight="bold" mb={2}>
+            Flight Itinerary
+          </Typography>
+          {bookingData.flightOffer.trips.map((trip, idx) => (
+            <Card key={idx} elevation={1} sx={{ borderRadius: 2, mb: 3, p: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
+                {trip.from} → {trip.to} | Duration: {trip.totalFlightDuration}
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              {trip.legs.map((leg) => (
+                <Box key={leg.legNo} sx={{ mb: 2 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <FlightTakeoffIcon color="primary" />
+                    <Typography>
+                      Depart: {leg.departureAirport} T{leg.departureTerminal} — {formatDateTime(leg.departureDateTime)}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <FlightLandIcon color="secondary" />
+                    <Typography>
+                      Arrive: {leg.arrivalAirport} T{leg.arrivalTerminal} — {formatDateTime(leg.arrivalDateTime)}
+                    </Typography>
+                  </Stack>
+                </Box>
+              ))}
+            </Card>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 };
