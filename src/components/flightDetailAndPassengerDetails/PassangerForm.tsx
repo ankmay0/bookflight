@@ -12,7 +12,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Chip,
   Stack,
   Autocomplete,
 } from "@mui/material";
@@ -23,10 +22,10 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import LuggageIcon from "@mui/icons-material/Luggage";
+import { Flight } from "../Types/FlightTypes";
 
 interface PassengerFormProps {
-  flight: any;
+  flight: Flight;
   navigate: any;
   passengersNumber?: number;
 }
@@ -37,8 +36,36 @@ const countryCodes = [
   { code: "+91", label: "India (+91)" },
   { code: "+86", label: "China (+86)" },
   { code: "+81", label: "Japan (+81)" },
-  // Add more country codes as needed
 ];
+
+const formatPrice = (price: string | number): string => {
+  const priceValue = typeof price === "number" ? price : parseFloat(price) || 0;
+  return `₹${priceValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const getCityName = (airportCode: string | undefined): string => {
+  const airportCityMap: { [key: string]: string } = {
+    EWR: "Newark",
+    JFK: "New York",
+    LGA: "New York",
+    LAX: "Los Angeles",
+    ORD: "Chicago",
+    ATL: "Atlanta",
+    DFW: "Dallas",
+    SFO: "San Francisco",
+    SEA: "Seattle",
+    BOS: "Boston",
+    DEL: "Delhi",
+    BOM: "Mumbai",
+    BLR: "Bengaluru",
+    MAA: "Chennai",
+    HYD: "Hyderabad",
+    CCU: "Kolkata",
+    DXB: "Dubai",
+    PDX: "Portland",
+  };
+  return airportCode ? airportCityMap[airportCode.toUpperCase()] || airportCode : "Unknown";
+};
 
 const PassengerForm: React.FC<PassengerFormProps> = ({
   flight,
@@ -151,13 +178,30 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
       contactErrors.phone ||
       contactErrors.countryCode;
 
-      console.log(passengers);
-
     if (!hasErrors) {
       navigate("/review-confirmation", {
         state: { passengers, contact, flight },
       });
     }
+  };
+
+  // Enhanced price calculation with error handling
+  const totalPricePerTraveler = parseFloat(flight.totalPrice) || 0;
+  const basePricePerTraveler = parseFloat(flight.basePrice) || 0;
+  const taxesAndFees = (totalPricePerTraveler - basePricePerTraveler).toFixed(2);
+  const totalPrice = (totalPricePerTraveler * passengers.length).toFixed(2);
+
+  const formatTime = (date: string) =>
+    new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
+
+  const calculateFlightDuration = (legs: any[]) => {
+    const dep = new Date(legs[0].departureDateTime).getTime();
+    const arr = new Date(legs[legs.length - 1].arrivalDateTime).getTime();
+    const minutes = Math.round((arr - dep) / 60000);
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
   };
 
   return (
@@ -333,46 +377,23 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
               </Box>
             ))}
 
-            <Button
-              variant="outlined"
-              startIcon={<PersonAddIcon />}
-              onClick={addPassenger}
-              sx={{
-                borderRadius: 1,
-                textTransform: "none",
-                fontSize: "1rem",
-                py: 1,
-                "&:hover": {
-                  bgcolor: "primary.light",
-                  color: "primary.contrastText",
-                },
-              }}
-            >
-              Add Another Traveler
-            </Button>
-          </Paper>
+            {passengers.length < (passengersNumber || 9) && (
+              <Button
+                variant="outlined"
+                startIcon={<PersonAddIcon />}
+                onClick={addPassenger}
+                sx={{ mb: 3, textTransform: "none", borderRadius: 1 }}
+              >
+                Add Another Traveler
+              </Button>
+            )}
 
-          {/* Contact Info */}
-          <Paper
-            sx={{
-              p: { xs: 2, md: 3 },
-              mt: 3,
-              borderRadius: 2,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              bgcolor: "#fff",
-            }}
-          >
             <Typography
               variant="h6"
               fontWeight={600}
-              color="primary"
-              gutterBottom
-              sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
+              sx={{ mb: 2, fontSize: { xs: "1.2rem", md: "1.5rem" } }}
             >
               Contact Information
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-              We'll use this to send booking confirmation and updates
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -386,9 +407,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   error={!!errors.contact.email}
                   helperText={errors.contact.email}
                   InputProps={{
-                    startAdornment: (
-                      <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />
-                    ),
+                    startAdornment: <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />,
                     sx: { borderRadius: 1 },
                   }}
                 />
@@ -398,12 +417,11 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   options={countryCodes}
                   getOptionLabel={(option) => option.label}
                   value={countryCodes.find((c) => c.code === contact.countryCode) || null}
-                  onChange={(event, newValue) => handleCountryCodeChange(newValue?.code || "+1")}
+                  onChange={(_, value) => handleCountryCodeChange(value?.code || "+1")}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Country Code"
-                      required
                       error={!!errors.contact.countryCode}
                       helperText={errors.contact.countryCode}
                       InputProps={{
@@ -425,9 +443,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
                   error={!!errors.contact.phone}
                   helperText={errors.contact.phone}
                   InputProps={{
-                    startAdornment: (
-                      <PhoneIcon sx={{ mr: 1, color: "text.secondary" }} />
-                    ),
+                    startAdornment: <PhoneIcon sx={{ mr: 1, color: "text.secondary" }} />,
                     sx: { borderRadius: 1 },
                   }}
                 />
@@ -436,159 +452,112 @@ const PassengerForm: React.FC<PassengerFormProps> = ({
           </Paper>
         </Grid>
 
-        {/* Booking Summary Section */}
-        <Grid
-          item
-          xs={12}
-          md={4}
-          sx={{
-            position: { md: "sticky" },
-            top: { md: 20 },
-            alignSelf: { md: "flex-start" },
-          }}
-        >
+        {/* Flight Summary Section */}
+        <Grid item xs={12} md={4}>
           <Paper
             sx={{
               p: { xs: 2, md: 3 },
               borderRadius: 2,
               boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               bgcolor: "#fff",
-              display: "flex",
-              flexDirection: "column",
             }}
           >
             <Typography
               variant="h6"
-              fontWeight={700}
-              color="primary"
-              gutterBottom
-              sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
+              fontWeight={600}
+              sx={{ mb: 2, fontSize: { xs: "1.2rem", md: "1.5rem" } }}
             >
-              Booking Summary
+              Flight Summary
             </Typography>
-            <Box mb={2} sx={{ flexGrow: 1 }}>
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                {new Date(flight.trips[0].legs.departureDateTime).toLocaleDateString([], {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}{" "}
-                • {flight.trips[0].stops} stop
-                {flight.trips.stops !== 1 ? "s" : ""} • {flight.trips.totalFlightDuration}
-              </Typography>
 
-              {flight.trips.map((trip: any, tripIdx: number) => (
-                <Box key={tripIdx} mb={2}>
-                  {trip.legs.map((leg: any, legIdx: number) => (
-                    <Box key={legIdx} mb={2}>
-                      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                        <FlightTakeoffIcon fontSize="small" color="primary" />
+            {flight.trips.map((trip, index) => (
+              <Box key={index} mb={2}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  sx={{ mb: 1, color: "primary.main" }}
+                >
+                  {index === 0 ? "Outbound" : "Return"} Flight
+                </Typography>
+                {trip.legs.map((leg, legIndex) => (
+                  <Box key={legIndex} display="flex" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1} alignItems="center" flex={1}>
+                      <Box>
+                        {legIndex === 0 ? (
+                          <FlightTakeoffIcon sx={{ color: "text.secondary" }} />
+                        ) : (
+                          <FlightLandIcon sx={{ color: "text.secondary" }} />
+                        )}
+                      </Box>
+                      <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          {leg.operatingCarrierCode} {leg.flightNumber}
+                          {formatTime(leg.departureDateTime)} - {formatTime(leg.arrivalDateTime)}
                         </Typography>
-                        <Chip
-                          label={leg.aircraftCode}
-                          size="small"
-                          sx={{
-                            bgcolor: "primary.light",
-                            color: "primary.contrastText",
-                            fontSize: "0.7rem",
-                            height: 20,
-                          }}
-                        />
-                      </Stack>
-                      <Box sx={{ pl: 2, borderLeft: "2px solid #e0e0e0" }}>
-                        <Typography variant="body2" sx={{ mb: 0.5 }}>
-                          <strong>
-                            {new Date(leg.departureDateTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </strong>{" "}
-                          {leg.departureAirport}
-                          {leg.departureTerminal && ` (T${leg.departureTerminal})`}
-                        </Typography>
-                        <Stack direction="row" alignItems="center" spacing={0.5} sx={{ my: 0.5 }}>
-                          <ScheduleIcon fontSize="small" color="action" />
-                          <Typography variant="caption" color="text.secondary">
-                            {leg.duration}
-                          </Typography>
-                        </Stack>
-                        <Typography variant="body2">
-                          <strong>
-                            {new Date(leg.arrivalDateTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </strong>{" "}
-                          {leg.arrivalAirport}
-                          {leg.arrivalTerminal && ` (T${leg.arrivalTerminal})`}
+                        <Typography variant="caption" color="text.secondary">
+                          {getCityName(leg.departureAirport)} ({leg.departureAirport}) →{" "}
+                          {getCityName(leg.arrivalAirport)} ({leg.arrivalAirport}) ·{" "}
+                          {formatDate(leg.departureDateTime)}
                         </Typography>
                       </Box>
-                    </Box>
-                  ))}
-                  {trip.totalLayoverDuration && trip.totalLayoverDuration !== "0h 0m" && (
-                    <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                      <FlightLandIcon fontSize="small" color="error" />
-                      <Typography variant="caption" color="error">
-                        Layover: {trip.totalLayoverDuration}
-                      </Typography>
                     </Stack>
-                  )}
+                  </Box>
+                ))}
+                <Box display="flex" alignItems="center" mt={1}>
+                  <ScheduleIcon sx={{ mr: 1, color: "text.secondary" }} />
+                  <Typography variant="caption" color="text.secondary">
+                    Duration: {calculateFlightDuration(trip.legs)}
+                  </Typography>
                 </Box>
-              ))}
+              </Box>
+            ))}
 
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="body2" fontWeight={600} mb={1}>
-                Baggage Allowance
+            <Divider sx={{ my: 2 }} />
+
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              sx={{ mb: 1, color: "primary.main" }}
+            >
+              Price Details
+            </Typography>
+            <Box display="flex" justifyContent="space-between" mb={1}>
+              <Typography variant="body2">
+                Base Price ({passengers.length} Traveler{passengers.length > 1 ? "s" : ""})
               </Typography>
-              <Stack spacing={0.5} sx={{ mb: 2 }}>
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <LuggageIcon fontSize="small" color="action" />
-                  <Typography variant="caption">
-                    Cabin: 8 kg / Adult
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <LuggageIcon fontSize="small" color="action" />
-                  <Typography variant="caption">
-                    Check-in: 23 kg / Adult
-                  </Typography>
-                </Stack>
-              </Stack>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Travelers: {passengers.length}
+              <Typography variant="body2">{formatPrice(basePricePerTraveler)}</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mb={1}>
+              <Typography variant="body2">Taxes & Fees</Typography>
+              <Typography variant="body2">{formatPrice(taxesAndFees)}</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mb={2}>
+              <Typography variant="subtitle2" fontWeight={600}>
+                Price per Traveler
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Price per Traveler: ₹{parseFloat(flight.totalPrice).toFixed(2)}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" fontWeight={700}>
-                Total: ₹{(parseFloat(flight.totalPrice) * passengers.length).toFixed(2)}
+              <Typography variant="subtitle2" fontWeight={600}>
+                {formatPrice(totalPricePerTraveler)}
               </Typography>
             </Box>
+            <Box display="flex" justifyContent="space-between" mb={3}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Total
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={700} color="primary.main">
+                {formatPrice(totalPrice)}
+              </Typography>
+            </Box>
+
             <Button
               variant="contained"
-              color="primary"
               fullWidth
               onClick={handleConfirm}
-              disabled={
-                passengers.some((p) => !p.firstName || !p.lastName || !p.dob || !p.gender) ||
-                !contact.email ||
-                !contact.phone ||
-                !contact.countryCode ||
-                !!errors.contact.email ||
-                !!errors.contact.phone ||
-                !!errors.contact.countryCode
-              }
+              disabled={totalPricePerTraveler <= 0}
               sx={{
-                borderRadius: 1,
-                py: 1.5,
                 textTransform: "none",
-                fontSize: "1rem",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.15)" },
+                fontSize: 16,
+                py: 1.2,
+                borderRadius: 2,
+                fontWeight: 600,
               }}
             >
               Continue to Payment

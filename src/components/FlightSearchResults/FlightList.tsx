@@ -12,7 +12,6 @@ import Divider from "@mui/material/Divider";
 import Lottie from "lottie-react";
 import SidebarFilters from "./SidebarFilters";
 import { Flight } from "../Types/FlightTypes";
-import { useNavigate } from "react-router-dom";
 import { BookingStep } from "./FlightSearchResults";
 
 // --- Airline utilities --- //
@@ -58,19 +57,19 @@ const airportCityMap: { [key: string]: string } = {
   HYD: "Hyderabad",
   CCU: "Kolkata",
   DXB: "Dubai",
-  // ...add more as needed
+  PDX: "Portland", // Added for provided flight data
 };
 
-const getCityName = (airportCode: string): string =>
-  airportCityMap[airportCode?.toUpperCase?.()] || airportCode;
+const getCityName = (airportCode: string | undefined): string =>
+  airportCode ? airportCityMap[airportCode?.toUpperCase?.()] || airportCode : "Unknown";
 
 interface FlightListProps {
   loading: boolean;
   lottieJson: any;
   filteredFlights: Flight[];
   selectedDepartureFlight: Flight | null;
-  from: string;
-  to: string;
+  from: string | undefined; // Allow undefined
+  to: string | undefined; // Allow undefined
   showFilters: boolean;
   handleDepartureSelect: (flight: Flight) => void;
   handleConfirmSelection: (flight: Flight) => void;
@@ -134,6 +133,14 @@ const FlightCard: React.FC<{
     return String(price ?? 0);
   };
 
+  if (!trip || !firstLeg) {
+    return (
+      <Typography variant="body1" color="text.secondary">
+        Invalid flight data
+      </Typography>
+    );
+  }
+
   return (
     <Paper
       elevation={0}
@@ -152,20 +159,16 @@ const FlightCard: React.FC<{
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item xs={9}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            {firstLeg && (
-              <>
-                <img
-                  src={getAirlineIconURL(firstLeg.operatingCarrierCode)}
-                  alt={`${getAirlineName(firstLeg.operatingCarrierCode)} logo`}
-                  style={{ height: 20, width: 20, marginRight: 6, verticalAlign: "middle", borderRadius: 3, background: "#fff" }}
-                />
-                <strong style={{ fontWeight: 800, fontSize: 14 }}>{getAirlineName(firstLeg.operatingCarrierCode)}</strong>{" "}
-                <span style={{ fontWeight: 700, fontSize: 13 }}>{firstLeg.flightNumber}</span>
-              </>
-            )}
+            <img
+              src={getAirlineIconURL(firstLeg.operatingCarrierCode)}
+              alt={`${getAirlineName(firstLeg.operatingCarrierCode)} logo`}
+              style={{ height: 20, width: 20, marginRight: 6, verticalAlign: "middle", borderRadius: 3, background: "#fff" }}
+            />
+            <strong style={{ fontWeight: 800, fontSize: 14 }}>{getAirlineName(firstLeg.operatingCarrierCode)}</strong>{" "}
+            <span style={{ fontWeight: 700, fontSize: 13 }}>{firstLeg.flightNumber}</span>
           </Typography>
           <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mt: 0.25 }}>
-            {mapStopsToLabel(trip?.stops)}
+            {mapStopsToLabel(trip.stops)}
           </Typography>
         </Grid>
         <Grid item xs={3} sx={{ textAlign: "right" }}>
@@ -182,7 +185,7 @@ const FlightCard: React.FC<{
       <Divider sx={{ my: 1 }} />
 
       <Box>
-        {trip?.legs?.map((leg, lIdx) => (
+        {trip.legs.map((leg, lIdx) => (
           <Box
             key={lIdx}
             sx={{
@@ -220,7 +223,6 @@ const FlightCard: React.FC<{
         ))}
       </Box>
 
-      {/* Select Button */}
       <Box sx={{ textAlign: "right", mt: 1.5 }}>
         <Button variant="contained" color="primary" size="small" onClick={onSelect}>
           Select
@@ -256,14 +258,18 @@ const FlightList: React.FC<FlightListProps> = ({
   setSelectedDepartureFlight,
   currentStep,
 }) => {
-  const flightsToShow = currentStep === 'departure' 
-    ? filteredFlights.filter(f => f.trips[0]?.from === from && f.trips[0]?.to === to)
-    : filteredFlights.filter(f => f.trips[1]?.from === to && f.trips[1]?.to === from);
+  // Guard against undefined from/to
+  if (!from || !to) {
+    return (
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>
+        Please specify departure and destination airports.
+      </Typography>
+    );
+  }
 
-  const departureFlights = filteredFlights.filter((flight) => flight.trips[0]?.from === from && flight.trips[0]?.to === to);
-  const returnFlights = selectedDepartureFlight
-    ? filteredFlights.filter((flight) => flight.trips[1]?.from === to && flight.trips[1]?.to === from)
-    : [];
+  const flightsToShow = currentStep === 'departure'
+    ? filteredFlights.filter(f => f.trips[0]?.from === from && f.trips[0]?.to === to)
+    : filteredFlights.filter(f => f.trips[0]?.from === to && f.trips[0]?.to === from);
 
   return (
     <Grid container spacing={3}>
@@ -292,28 +298,29 @@ const FlightList: React.FC<FlightListProps> = ({
           ) : (
             <CircularProgress sx={{ display: "block", margin: "0 auto" }} />
           )
-        ) : !selectedDepartureFlight ? (
+        ) : (
           <Stack spacing={3}>
             <Typography variant="h5" fontWeight={600}>
-              Choose Your Departure Flight from {getCityName(from)} to {getCityName(to)}
+              {currentStep === 'departure'
+                ? `Choose Your Departure Flight from ${getCityName(from)} to ${getCityName(to)}`
+                : `Choose Your Return Flight from ${getCityName(to)} to ${getCityName(from)}`}
             </Typography>
-            {departureFlights.length === 0 ? (
+            {flightsToShow.length === 0 ? (
               <Typography variant="body1" color="text.secondary">
-                No departure flights available. Try adjusting your filters.
+                No {currentStep === 'departure' ? 'departure' : 'return'} flights available. Try adjusting your filters.
               </Typography>
             ) : (
-              departureFlights.map((flight, idx) => (
+              flightsToShow.map((flight, idx) => (
                 <FlightCard
                   key={idx}
                   flight={flight}
-                  tripIndex={0}
-                  onSelect={() => handleDepartureSelect(flight)}
+                  tripIndex={0} // Always use trips[0] since flights are split
+                  onSelect={() => currentStep === 'departure' ? handleDepartureSelect(flight) : handleConfirmSelection(flight)}
                   mapStopsToLabel={mapStopsToLabel}
                 />
               ))
             )}
-
-            {setSelectedDepartureFlight && (
+            {currentStep === 'return' && setSelectedDepartureFlight && (
               <Button
                 variant="outlined"
                 onClick={() => setSelectedDepartureFlight(null)}
@@ -322,34 +329,6 @@ const FlightList: React.FC<FlightListProps> = ({
                 Change Departure Flight
               </Button>
             )}
-          </Stack>
-        ) : (
-          <Stack spacing={3}>
-            <Typography variant="h5" fontWeight={600}>
-              Choose Your Return Flight from {getCityName(to)} to {getCityName(from)}
-            </Typography>
-            {returnFlights.length === 0 ? (
-              <Typography variant="body1" color="text.secondary">
-                No return flights available. Try adjusting your filters or select a different departure.
-              </Typography>
-            ) : (
-              returnFlights.map((flight, idx) => (
-                <FlightCard
-                  key={idx}
-                  flight={flight}
-                  tripIndex={1}
-                  onSelect={() => handleConfirmSelection(flight)}
-                  mapStopsToLabel={mapStopsToLabel}
-                />
-              ))
-            )}
-            <Button
-              variant="outlined"
-              onClick={() => setSelectedDepartureFlight && setSelectedDepartureFlight(null)}
-              sx={{ mt: 2, alignSelf: "flex-start" }}
-            >
-              Change Departure Flight
-            </Button>
           </Stack>
         )}
       </Grid>

@@ -29,11 +29,24 @@ const airlinesData: { [key: string]: { name: string; icon: string } } = {
 
 // Airport to city mapping
 const airportCityMap: { [key: string]: string } = {
-  EWR: "Newark", JFK: "New York", LGA: "New York",
-  LAX: "Los Angeles", ORD: "Chicago", ATL: "Atlanta",
-  DFW: "Dallas", SFO: "San Francisco", SEA: "Seattle",
-  BOS: "Boston", DEL: "Delhi", BOM: "Mumbai", BLR: "Bengaluru",
-  MAA: "Chennai", HYD: "Hyderabad", CCU: "Kolkata", DXB: "Dubai",
+  EWR: "Newark",
+  JFK: "New York",
+  LGA: "New York",
+  LAX: "Los Angeles",
+  ORD: "Chicago",
+  ATL: "Atlanta",
+  DFW: "Dallas",
+  SFO: "San Francisco",
+  SEA: "Seattle",
+  BOS: "Boston",
+  DEL: "Delhi",
+  BOM: "Mumbai",
+  BLR: "Bengaluru",
+  MAA: "Chennai",
+  HYD: "Hyderabad",
+  CCU: "Kolkata",
+  DXB: "Dubai",
+  PDX: "Portland",
 };
 
 // Helper functions
@@ -74,7 +87,10 @@ const TripReview: React.FC<TripReviewProps> = ({
   const departureLeg = departureFlight.trips[0].legs[0];
   const returnLeg = returnFlight.trips[0].legs[0];
   const totalPrice =
-    parseFloat(departureFlight.totalPrice) + parseFloat(returnFlight.totalPrice);
+    (parseFloat(departureFlight.totalPrice) + parseFloat(returnFlight.totalPrice)).toFixed(2);
+  const basePrice =
+    (parseFloat(departureFlight.basePrice) + parseFloat(returnFlight.basePrice)).toFixed(2);
+  const taxesAndFees = (parseFloat(totalPrice) - parseFloat(basePrice)).toFixed(2);
 
   const formatTime = (d: string) =>
     new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
@@ -106,7 +122,7 @@ const TripReview: React.FC<TripReviewProps> = ({
       </Typography>
       <Typography sx={{ fontSize: 15, color: "text.secondary", mb: 1.5 }}>
         {formatTime(leg.departureDateTime)} - {formatTime(leg.arrivalDateTime)} ·{" "}
-        {Math.floor(calculateFlightDuration(flight) / 60)}h
+        {Math.floor(calculateFlightDuration(flight) / 60)}h {calculateFlightDuration(flight) % 60}m
       </Typography>
       <Box display="flex" alignItems="center" gap={1}>
         <img
@@ -141,7 +157,7 @@ const TripReview: React.FC<TripReviewProps> = ({
         />
         <CarBunddle />
       </Grid>
-      
+
       {/* Right column */}
       <Grid item xs={12} md={4}>
         <Paper
@@ -162,13 +178,13 @@ const TripReview: React.FC<TripReviewProps> = ({
           <Box display="flex" justifyContent="space-between" mb={1}>
             <Typography sx={{ fontSize: 15 }}>Flight</Typography>
             <Typography sx={{ fontSize: 15 }}>
-              {formatPrice(totalPrice - 7060)}
+              {formatPrice(basePrice)}
             </Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" mb={2}>
             <Typography sx={{ fontSize: 15 }}>Taxes & Fees</Typography>
             <Typography sx={{ fontSize: 15 }}>
-              {formatPrice(7060)}
+              {formatPrice(taxesAndFees)}
             </Typography>
           </Box>
 
@@ -196,12 +212,8 @@ const TripReview: React.FC<TripReviewProps> = ({
             Check Out
           </Button>
         </Paper>
-        
       </Grid>
-      
     </Grid>
-
-    
   );
 };
 
